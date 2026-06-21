@@ -1,0 +1,4 @@
+{
+  "buildCommand": "mint export",
+  "outputDirectory": ".mintlify/export"
+}
