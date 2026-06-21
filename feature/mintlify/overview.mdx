@@ -1,0 +1,81 @@
+---
+title: Mintlify Expert Guide
+sidebarTitle: Overview
+description: A complete, multi-page reference for Mintlify — from first deploy to enterprise developer portals, API playgrounds, and AI-native documentation.
+icon: book-open
+---
+
+<Info>
+  This is a working reference, not a marketing tour. It assumes you can read JSON
+  and run a terminal, and it favors the *current* Mintlify stack: the `mint` CLI
+  and the `docs.json` configuration format (which replaced the older `mintlify`
+  CLI and `mint.json`).
+</Info>
+
+## How to use this guide
+
+Read it in order the first time to build a mental model, then treat it as a
+lookup table. Each page is self-contained and ends with the gotchas that
+actually bite people in production.
+
+<CardGroup cols={3}>
+  <Card title="Foundations" icon="cube" href="/feature/mintlify/what-is-mintlify">
+    What Mintlify is, the docs-as-code model, and the request lifecycle.
+  </Card>
+  <Card title="Build" icon="hammer" href="/feature/mintlify/project-structure">
+    `docs.json`, navigation, MDX, components, and the API playground.
+  </Card>
+  <Card title="Operate" icon="gauge-high" href="/feature/mintlify/ai-native">
+    AI features, SEO, analytics, versioning, and enterprise controls.
+  </Card>
+</CardGroup>
+
+## What's inside
+
+<CardGroup cols={2}>
+  <Card title="What Mintlify actually is" icon="circle-info" href="/feature/mintlify/what-is-mintlify">
+    The docs-as-code model and where Mintlify fits.
+  </Card>
+  <Card title="The request lifecycle" icon="diagram-project" href="/feature/mintlify/request-lifecycle">
+    What happens between `git push` and a live page.
+  </Card>
+  <Card title="Project structure" icon="folder-tree" href="/feature/mintlify/project-structure">
+    How a Mintlify repo is laid out.
+  </Card>
+  <Card title="The CLI" icon="terminal" href="/feature/mintlify/cli">
+    Local development, broken-link checks, and updates.
+  </Card>
+  <Card title="docs.json deep dive" icon="brackets-curly" href="/feature/mintlify/docs-json">
+    Every property that matters in the config file.
+  </Card>
+  <Card title="The navigation system" icon="sitemap" href="/feature/mintlify/navigation">
+    Dropdowns, tabs, groups, and pages.
+  </Card>
+  <Card title="Writing content" icon="pen-nib" href="/feature/mintlify/writing-content">
+    MDX and frontmatter, field by field.
+  </Card>
+  <Card title="Components reference" icon="cubes" href="/feature/mintlify/components">
+    Callouts, steps, tabs, cards, and snippets.
+  </Card>
+  <Card title="API & the playground" icon="plug" href="/feature/mintlify/api-playground">
+    OpenAPI specs and the interactive "try it" panel.
+  </Card>
+  <Card title="AI-native documentation" icon="robot" href="/feature/mintlify/ai-native">
+    The assistant, semantic search, llms.txt, and MCP.
+  </Card>
+  <Card title="SEO, analytics & versioning" icon="magnifying-glass" href="/feature/mintlify/seo-analytics">
+    Metadata, redirects, and managing versions.
+  </Card>
+  <Card title="Git & deployment" icon="rocket" href="/feature/mintlify/deployment">
+    Connecting a repo and shipping on merge.
+  </Card>
+  <Card title="Enterprise architecture" icon="building" href="/feature/mintlify/enterprise">
+    SSO, monorepos, and multi-product portals.
+  </Card>
+  <Card title="Best practices" icon="shield-check" href="/feature/mintlify/best-practices">
+    The checklist before you launch.
+  </Card>
+  <Card title="Common pitfalls" icon="triangle-exclamation" href="/feature/mintlify/pitfalls">
+    Symptoms, causes, and fixes.
+  </Card>
+</CardGroup>

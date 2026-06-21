@@ -1,0 +1,493 @@
+---
+title: "Object-Oriented Programming"
+sidebarTitle: "Part 2: OOP"
+description: "Classes, objects, inheritance, polymorphism, encapsulation, abstraction, and SOLID principles."
+icon: "cubes"
+---
+
+OOP organizes code around objects that bundle data and behavior. This part covers classes, the four OOP pillars, and the SOLID design principles.
+
+---
+
+## Module 5: OOP Fundamentals
+
+### Classes and Objects
+
+**Definition:** A class is a blueprint; an object is a concrete instance created from that blueprint.
+
+**Explanation:**
+- A class defines what data (fields/properties) and actions (methods) something has.
+- An object is a real item in memory built from the class using `new`.
+- You can create many objects from one class.
+
+**Basic example:**
+```csharp
+class Car
+{
+    public string Brand;
+    public void Drive() => Console.WriteLine($"{Brand} is driving");
+}
+
+var myCar = new Car();   // object
+myCar.Brand = "Toyota";
+myCar.Drive();           // Toyota is driving
+```
+
+**Real-world example:** A `User` class describes all users; each registered person is a `User` object with their own name and email.
+
+**Advanced notes:**
+- A `record` is a special class for immutable data with value-based equality.
+- A `struct` is a value type (copied by value); use it for small, simple data.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/objects
+- https://www.w3schools.com/cs/cs_classes.php
+
+---
+
+### Constructors
+
+**Definition:** A constructor is a special method that runs when an object is created, used to set it up.
+
+**Explanation:**
+- It has the same name as the class and no return type.
+- Use it to give starting values to fields/properties.
+- A class can have multiple constructors (overloaded).
+
+**Basic example:**
+```csharp
+class User
+{
+    public string Name;
+    public User(string name)   // constructor
+    {
+        Name = name;
+    }
+}
+
+var u = new User("Kathir");
+Console.WriteLine(u.Name);     // Kathir
+```
+
+**Real-world example:** Creating an `Order` object that automatically records the current date and a unique ID when constructed.
+
+**Advanced notes:**
+- If you write no constructor, C# gives a default parameterless one. Adding any constructor removes that default.
+- Use `: this(...)` to call another constructor, and `: base(...)` to call the parent's constructor.
+- Primary constructors (modern C#) let you declare parameters on the class line: `class User(string name)`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/constructors
+- https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/tutorials/primary-constructors
+
+---
+
+### Properties
+
+**Definition:** A property is a class member that controls reading and writing a value, like a smart field.
+
+**Explanation:**
+- Properties use `get` (read) and `set` (write) accessors.
+- **Auto-properties** generate the storage for you: `{ get; set; }`.
+- You can make a property read-only or add logic inside get/set.
+
+**Basic example:**
+```csharp
+class Person
+{
+    public string Name { get; set; }            // read + write
+    public int Age { get; private set; }         // read public, write inside class
+
+    public Person(int age) => Age = age;
+}
+```
+
+**Real-world example:** A `Temperature` property whose `set` rejects values below absolute zero.
+
+**Advanced notes:**
+- `init` accessors allow setting only during object creation: `{ get; init; }`.
+- Computed properties have only a getter: `public string FullName => $"{First} {Last}";`.
+- `required` forces a property to be set when creating the object.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/properties
+- https://www.w3schools.com/cs/cs_properties.php
+
+---
+
+### Access Modifiers
+
+**Definition:** Access modifiers control which code can see and use a class member.
+
+**Explanation:**
+- `public`: accessible everywhere.
+- `private`: accessible only inside the same class (the default for members).
+- `protected`: accessible inside the class and its subclasses.
+- `internal`: accessible only within the same project/assembly.
+
+**Basic example:**
+```csharp
+class Account
+{
+    public string Owner;        // anyone
+    private decimal balance;    // only this class
+    protected int id;           // this class + children
+}
+```
+
+**Real-world example:** A bank account keeps `balance` private so it can only change through controlled `Deposit()`/`Withdraw()` methods.
+
+**Advanced notes:**
+- `protected internal` = protected OR internal; `private protected` = protected AND in same assembly.
+- Default access for class members is `private`; for top-level types it is `internal`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/access-modifiers
+- https://www.w3schools.com/cs/cs_access_modifiers.php
+
+---
+
+## Module 6: Advanced OOP
+
+### Encapsulation
+
+**Definition:** Encapsulation means hiding internal data and exposing only safe, controlled access to it.
+
+**Explanation:**
+- Keep fields `private` and expose them through properties or methods.
+- This protects an object's data from being put into an invalid state.
+- The outside world depends on a stable interface, not internal details.
+
+**Basic example:**
+```csharp
+class BankAccount
+{
+    private decimal balance;
+
+    public void Deposit(decimal amount)
+    {
+        if (amount > 0) balance += amount;
+    }
+
+    public decimal GetBalance() => balance;
+}
+```
+
+**Real-world example:** A car's engine is hidden; you drive using the pedals and wheel, not by touching internal parts.
+
+**Advanced notes:**
+- Encapsulation enables validation, logging, or lazy loading without changing how callers use the object.
+- It reduces coupling: you can change internals freely as long as the public interface stays the same.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/
+- https://www.w3schools.com/cs/cs_encapsulation.php
+
+---
+
+### Inheritance
+
+**Definition:** Inheritance lets a class reuse and extend the members of another class.
+
+**Explanation:**
+- The child (derived) class inherits fields, properties, and methods from the parent (base) class.
+- Use `:` to inherit: `class Dog : Animal`.
+- The child can add new members or override existing ones.
+
+**Basic example:**
+```csharp
+class Animal
+{
+    public void Eat() => Console.WriteLine("Eating");
+}
+
+class Dog : Animal
+{
+    public void Bark() => Console.WriteLine("Woof");
+}
+
+var d = new Dog();
+d.Eat();   // inherited
+d.Bark();  // own method
+```
+
+**Real-world example:** `Admin` and `Customer` both inherit shared fields from a base `User` class.
+
+**Advanced notes:**
+- C# supports single inheritance only (one base class), but a class can implement many interfaces.
+- Mark a class `sealed` to prevent it from being inherited.
+- Prefer composition over deep inheritance hierarchies — they get fragile.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+- https://www.w3schools.com/cs/cs_inheritance.php
+
+---
+
+### Polymorphism
+
+**Definition:** Polymorphism means the same method call can behave differently depending on the actual object type.
+
+**Explanation:**
+- Mark a base method `virtual`, then `override` it in child classes.
+- A base-type variable can hold any child object and call its overridden version.
+- This lets you treat different objects uniformly.
+
+**Basic example:**
+```csharp
+class Shape { public virtual double Area() => 0; }
+class Circle : Shape
+{
+    public double R;
+    public override double Area() => 3.14 * R * R;
+}
+
+Shape s = new Circle { R = 2 };
+Console.WriteLine(s.Area()); // calls Circle's version
+```
+
+**Real-world example:** A drawing app loops over many `Shape` objects and calls `Draw()` — each shape draws itself correctly.
+
+**Advanced notes:**
+- **Compile-time polymorphism** = overloading; **runtime polymorphism** = overriding.
+- Use `new` to hide (not override) a member — usually a mistake; prefer `override`.
+- `base.Method()` calls the parent's version from inside an override.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/polymorphism
+- https://www.w3schools.com/cs/cs_polymorphism.php
+
+---
+
+### Abstraction
+
+**Definition:** Abstraction means exposing only essential features while hiding complex implementation details.
+
+**Explanation:**
+- An **abstract class** can have abstract members (no body) that children must implement.
+- You cannot create an object of an abstract class directly.
+- It defines a common template that derived classes complete.
+
+**Basic example:**
+```csharp
+abstract class Payment
+{
+    public abstract void Pay(decimal amount); // no body
+}
+
+class CardPayment : Payment
+{
+    public override void Pay(decimal amount)
+        => Console.WriteLine($"Paid {amount} by card");
+}
+```
+
+**Real-world example:** A `Payment` base type defines `Pay()`, while `CardPayment`, `UpiPayment`, and `WalletPayment` implement the actual steps.
+
+**Advanced notes:**
+- Abstract classes can mix abstract members with concrete ones and hold state (fields).
+- Choose an abstract class for shared code + identity; choose an interface for a pure contract.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/abstract
+- https://www.w3schools.com/cs/cs_abstract.php
+
+---
+
+### Interfaces
+
+**Definition:** An interface is a contract that lists members a class must implement, with no implementation itself.
+
+**Explanation:**
+- Declared with `interface`; members are public and have no body (traditionally).
+- A class implements it with `:` and must provide all members.
+- A class can implement many interfaces.
+
+**Basic example:**
+```csharp
+interface ILogger
+{
+    void Log(string message);
+}
+
+class ConsoleLogger : ILogger
+{
+    public void Log(string message) => Console.WriteLine(message);
+}
+```
+
+**Real-world example:** `ILogger` is implemented by a console logger, a file logger, and a database logger — code depends on the interface, not the specific one.
+
+**Advanced notes:**
+- Interfaces enable dependency injection and easy unit testing (swap real with mock).
+- Modern C# allows **default interface methods** (a body in the interface).
+- Naming convention: interfaces start with `I` (e.g., `IRepository`).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/types/interfaces
+- https://www.w3schools.com/cs/cs_interface.php
+
+---
+
+## Module 7: SOLID Principles
+
+SOLID is five design principles for writing maintainable, flexible object-oriented code.
+
+### Single Responsibility Principle (SRP)
+
+**Definition:** A class should have only one reason to change — one job.
+
+**Explanation:**
+- Each class focuses on a single responsibility.
+- Mixing concerns (e.g., business logic + saving files + emailing) makes code fragile.
+- Split unrelated tasks into separate classes.
+
+**Basic example:**
+```csharp
+// Bad: does too much
+class Report { void Generate() {} void SaveToFile() {} void Email() {} }
+
+// Good: split responsibilities
+class ReportGenerator { /* generate */ }
+class ReportSaver { /* save */ }
+class ReportEmailer { /* email */ }
+```
+
+**Real-world example:** An invoice class calculates totals; a separate service handles printing it to PDF.
+
+**Advanced notes:**
+- "One reason to change" is about actors/stakeholders, not literally one method.
+- SRP improves testability and reduces accidental breakage when requirements shift.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#single-responsibility
+- https://en.wikipedia.org/wiki/Single-responsibility_principle
+
+---
+
+### Open/Closed Principle (OCP)
+
+**Definition:** Classes should be open for extension but closed for modification.
+
+**Explanation:**
+- You should add new behavior by adding new code, not editing existing tested code.
+- Achieved with interfaces, inheritance, or composition.
+- Reduces the risk of breaking what already works.
+
+**Basic example:**
+```csharp
+interface IDiscount { decimal Apply(decimal price); }
+
+class NewYearDiscount : IDiscount { public decimal Apply(decimal p) => p * 0.9m; }
+class StudentDiscount : IDiscount { public decimal Apply(decimal p) => p * 0.8m; }
+// Add new discounts without touching the checkout code.
+```
+
+**Real-world example:** Adding a new payment method by creating a new class that implements `IPayment`, without editing the order processor.
+
+**Advanced notes:**
+- The Strategy pattern is a common way to satisfy OCP.
+- Don't over-apply it; add abstraction only where change is likely.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles
+- https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle
+
+---
+
+### Liskov Substitution Principle (LSP)
+
+**Definition:** A subclass should be usable anywhere its base class is expected, without breaking behavior.
+
+**Explanation:**
+- Derived types must honor the contract of the base type.
+- A child should not weaken guarantees or throw where the parent would not.
+- If substituting a subclass breaks the program, the design is wrong.
+
+**Basic example:**
+```csharp
+class Bird { public virtual void Move() {} }
+class Sparrow : Bird { public override void Move() => Console.WriteLine("Fly"); }
+// A Penguin that throws in Move() would violate LSP — rethink the hierarchy.
+```
+
+**Real-world example:** Any `IRepository` implementation (SQL, in-memory) must behave consistently so calling code does not care which one it gets.
+
+**Advanced notes:**
+- Classic violation: `Square` inheriting from `Rectangle` where setting width changes height unexpectedly.
+- LSP pushes you toward proper abstractions and away from "is-a" relationships that don't truly hold.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles
+- https://en.wikipedia.org/wiki/Liskov_substitution_principle
+
+---
+
+### Interface Segregation Principle (ISP)
+
+**Definition:** Prefer many small, focused interfaces over one large general-purpose interface.
+
+**Explanation:**
+- Clients should not be forced to depend on methods they do not use.
+- Split fat interfaces into role-specific ones.
+- Keeps implementations clean and avoids empty/throwing methods.
+
+**Basic example:**
+```csharp
+// Bad: one big interface
+interface IMachine { void Print(); void Scan(); void Fax(); }
+
+// Good: split them
+interface IPrinter { void Print(); }
+interface IScanner { void Scan(); }
+```
+
+**Real-world example:** A simple printer implements only `IPrinter`, not a giant interface that also demands fax and scan support.
+
+**Advanced notes:**
+- Smaller interfaces are easier to mock in tests.
+- ISP and SRP reinforce each other — both fight bloated, do-everything types.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles
+- https://en.wikipedia.org/wiki/Interface_segregation_principle
+
+---
+
+### Dependency Inversion Principle (DIP)
+
+**Definition:** Depend on abstractions (interfaces), not on concrete implementations.
+
+**Explanation:**
+- High-level modules should not depend on low-level details; both depend on abstractions.
+- Code asks for an interface, and the concrete class is supplied from outside.
+- This is the foundation of dependency injection.
+
+**Basic example:**
+```csharp
+class OrderService
+{
+    private readonly ILogger _logger;
+    public OrderService(ILogger logger) => _logger = logger; // depends on abstraction
+
+    public void Place() => _logger.Log("Order placed");
+}
+```
+
+**Real-world example:** A service receives an `IEmailSender` interface, so you can swap SMTP for a test fake without changing the service.
+
+**Advanced notes:**
+- DIP is realized in ASP.NET Core via its built-in DI container.
+- "Inversion" = the direction of dependency is flipped so details depend on policy, not the reverse.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/architectural-principles#dependency-inversion
+- https://en.wikipedia.org/wiki/Dependency_inversion_principle
+
+---
+
+## What to build next
+
+Model a small library system: a `Book` class, a `Member` class, and an `ILoanService` interface with a concrete implementation. Apply encapsulation (private fields), inheritance (`EBook : Book`), and at least SRP and DIP.
+
+Next: **[Part 3 — Collections and LINQ](/feature/techstack/donNetCore/part-03-collections-linq)**.

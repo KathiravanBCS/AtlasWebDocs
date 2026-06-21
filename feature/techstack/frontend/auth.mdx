@@ -1,0 +1,30 @@
+---
+title: Authentication & Authorization
+sidebarTitle: Auth
+description: Microsoft Identity authentication via Azure MSAL and role-based access control with CASL.
+icon: lock
+---
+
+## Authentication — Microsoft Identity
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **Azure MSAL Browser** | Microsoft Authentication Library for browser-based sign-in (OAuth2/OIDC). | [learn.microsoft.com/azure/active-directory/develop/msal-overview](https://learn.microsoft.com/en-us/entra/identity-platform/msal-overview) |
+| **Azure MSAL React** | React bindings and hooks for MSAL. | [github.com/AzureAD/microsoft-authentication-library-for-js](https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/lib/msal-react) |
+
+## Authorization — Role Based Access Control
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **CASL Ability** | Isomorphic authorization — defines what a user can do. | [casl.js.org/v6/en/guide/intro](https://casl.js.org/v6/en/guide/intro) |
+| **CASL React** | React components and hooks for conditional rendering by permission. | [casl.js.org/v6/en/package/casl-react](https://casl.js.org/v6/en/package/casl-react) |
+
+<Warning>
+  Authentication proves identity; authorization is still enforced **server-side**.
+  CASL on the frontend controls UI, not security — see the Playbook's
+  [Security Standards](/feature/playbook/security-standards).
+</Warning>
+
+<Card title="Next: Data Tables & Grids" icon="arrow-right" href="/feature/techstack/frontend/tables">
+  AG Grid, TanStack Table, and drag-and-drop.
+</Card>

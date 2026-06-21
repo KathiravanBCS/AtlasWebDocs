@@ -1,0 +1,194 @@
+---
+title: "Testing"
+sidebarTitle: "Part 9: Testing"
+description: "Unit and integration testing for .NET applications."
+icon: "vial"
+---
+
+Testing proves your code works and keeps it working as it changes. This part covers unit testing, mocking, and integration testing.
+
+---
+
+## Module 25: Unit Testing
+
+### xUnit
+
+**Definition:** xUnit is a popular .NET testing framework for writing and running unit tests.
+
+**Explanation:**
+- A unit test checks one small piece of logic in isolation.
+- `[Fact]` marks a single test; `[Theory]` runs the same test with multiple inputs.
+- Assertions (`Assert.Equal`) verify the result.
+
+**Basic example:**
+```csharp
+public class CalculatorTests
+{
+    [Fact]
+    public void Add_ReturnsSum()
+    {
+        var result = new Calculator().Add(2, 3);
+        Assert.Equal(5, result);
+    }
+}
+```
+
+**Real-world example:** Testing that a `CalculateDiscount` method returns the correct price for various inputs before shipping.
+
+**Advanced notes:**
+- Follow the **Arrange-Act-Assert** pattern for clear tests.
+- `[Theory]` with `[InlineData]` reduces duplicate tests for many cases.
+- xUnit creates a fresh test class instance per test for isolation.
+
+**Reference links:**
+- https://xunit.net/
+- https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-dotnet-test
+
+---
+
+### NUnit
+
+**Definition:** NUnit is another widely used .NET unit testing framework, similar to xUnit.
+
+**Explanation:**
+- Uses `[Test]` for tests and `[TestFixture]` for test classes.
+- `[TestCase]` provides parameterized inputs.
+- Has rich assertions and setup/teardown attributes.
+
+**Basic example:**
+```csharp
+[TestFixture]
+public class CalculatorTests
+{
+    [Test]
+    public void Add_ReturnsSum()
+    {
+        Assert.That(new Calculator().Add(2, 3), Is.EqualTo(5));
+    }
+}
+```
+
+**Real-world example:** A team standardizes on NUnit for its `[SetUp]`/`[TearDown]` hooks to prepare shared test data.
+
+**Advanced notes:**
+- `[SetUp]` runs before each test; `[OneTimeSetUp]` runs once for the fixture.
+- xUnit and NUnit are similar; pick one per project and stay consistent.
+- NUnit's fluent `Assert.That(...)` style reads naturally.
+
+**Reference links:**
+- https://docs.nunit.org/
+- https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-nunit
+
+---
+
+### Mocking with Moq
+
+**Definition:** Moq is a library that creates fake (mock) implementations of dependencies for testing.
+
+**Explanation:**
+- Mocks replace real dependencies (databases, APIs) so tests stay fast and isolated.
+- You set up what a mock returns and verify how it was called.
+- Lets you test a class without its real collaborators.
+
+**Basic example:**
+```csharp
+var repo = new Mock<IUserRepository>();
+repo.Setup(r => r.GetById(1)).Returns(new User { Name = "Asha" });
+
+var service = new UserService(repo.Object);
+var name = service.GetName(1);
+
+Assert.Equal("Asha", name);
+repo.Verify(r => r.GetById(1), Times.Once);
+```
+
+**Real-world example:** Testing an `OrderService` without a real database by mocking `IOrderRepository`.
+
+**Advanced notes:**
+- Mock interfaces, not concrete classes — this is why DIP/interfaces matter.
+- `Verify` checks interactions; `Setup` defines return behavior.
+- Don't over-mock; if a test needs many mocks, the design may be too coupled.
+
+**Reference links:**
+- https://github.com/devlooped/moq
+- https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices
+
+---
+
+## Module 26: Integration Testing
+
+### TestServer
+
+**Definition:** `TestServer` (via `WebApplicationFactory`) hosts your real API in memory to test it end to end.
+
+**Explanation:**
+- Spins up the whole app without a real network or server.
+- You send real HTTP requests with an `HttpClient` and check responses.
+- Tests routing, middleware, model binding, and controllers together.
+
+**Basic example:**
+```csharp
+public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly HttpClient _client;
+    public ApiTests(WebApplicationFactory<Program> factory)
+        => _client = factory.CreateClient();
+
+    [Fact]
+    public async Task GetProducts_ReturnsOk()
+    {
+        var response = await _client.GetAsync("/api/products");
+        Assert.True(response.IsSuccessStatusCode);
+    }
+}
+```
+
+**Real-world example:** Verifying that `POST /api/orders` with valid data returns 201 and that invalid data returns 400 — exercising the full pipeline.
+
+**Advanced notes:**
+- Integration tests are slower than unit tests; keep a healthy balance (more unit, fewer integration).
+- Override services in the factory to swap real dependencies for test versions.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/test/integration-tests
+- https://learn.microsoft.com/en-us/aspnet/core/test/
+
+---
+
+### In-Memory Database
+
+**Definition:** An in-memory database lets EF Core run tests without a real database, storing data in memory.
+
+**Explanation:**
+- Configure EF Core to use the in-memory provider during tests.
+- Data lives only for the test run, then disappears.
+- Makes database-touching tests fast and self-contained.
+
+**Basic example:**
+```csharp
+var options = new DbContextOptionsBuilder<AppDbContext>()
+    .UseInMemoryDatabase("TestDb")
+    .Options;
+
+using var db = new AppDbContext(options);
+db.Products.Add(new Product { Name = "Pen" });
+db.SaveChanges();
+```
+
+**Real-world example:** Testing repository logic (add, query, delete) without setting up SQL Server on the test machine.
+
+**Advanced notes:**
+- The in-memory provider does **not** enforce real SQL behavior (no relational constraints, no real transactions).
+- For accurate tests, prefer SQLite in-memory or a real database in a container (e.g., Testcontainers).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/testing/
+- https://learn.microsoft.com/en-us/ef/core/testing/choosing-a-testing-strategy
+
+---
+
+## What to build next
+
+Write unit tests for one service in your API using xUnit + Moq (mock the repository). Then add one integration test with `WebApplicationFactory` that calls a real endpoint and asserts the status code. Aim for clear Arrange-Act-Assert structure.
+
+Next: **[Part 10 — Architecture and Design Patterns](/feature/techstack/donNetCore/part-10-architecture)**.

@@ -1,0 +1,535 @@
+---
+title: "Real-World Development"
+sidebarTitle: "Part 11: Real-World Dev"
+description: "Configuration, caching, background jobs, file uploads, and sending email."
+icon: "screwdriver-wrench"
+---
+
+These are the features almost every production API needs: configuration, caching, background work, file uploads, and email.
+
+---
+
+## Module 31: Configuration
+
+Configuration lets you change settings (connection strings, keys, URLs) without changing code.
+
+### appsettings.json
+
+**Definition:** `appsettings.json` is the default file where ASP.NET Core stores application settings as JSON.
+
+**Explanation:**
+- Holds key-value settings, grouped into sections.
+- Loaded automatically at startup.
+- You read values through the `IConfiguration` service.
+
+**Basic example:**
+```json
+// appsettings.json
+{
+  "ConnectionStrings": {
+    "Default": "Server=localhost;Database=ShopDb;Trusted_Connection=True;"
+  },
+  "EmailSettings": {
+    "FromAddress": "noreply@shop.com",
+    "Port": 587
+  }
+}
+```
+```csharp
+// Read a value
+var conn = builder.Configuration.GetConnectionString("Default");
+var port = builder.Configuration["EmailSettings:Port"]; // use ":" for nested keys
+```
+
+**Real-world example:** Store your database connection string here so moving from a local database to a production one is a config change, not a code change.
+
+**Advanced notes:**
+- Configuration is layered: later sources override earlier ones (JSON → environment-specific JSON → environment variables → command line).
+- `appsettings.Development.json` overrides `appsettings.json` when running in the Development environment.
+- Never put real secrets (passwords, API keys) in `appsettings.json`; use environment variables or a secret store.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/#appsettingsjson
+
+### Environment Variables
+
+**Definition:** Environment variables are settings stored in the operating system or hosting platform, read by the app at runtime.
+
+**Explanation:**
+- Useful for secrets and values that differ per server.
+- Override `appsettings.json` values with the same key.
+- Use `__` (double underscore) to represent nested keys.
+
+**Basic example:**
+```bash
+# Linux/macOS
+export EmailSettings__Port=2525
+export ConnectionStrings__Default="Server=prod;Database=ShopDb;..."
+```
+```csharp
+// Read the same way as any config value
+var port = builder.Configuration["EmailSettings:Port"]; // now returns 2525
+```
+
+**Real-world example:** Cloud hosts (Azure App Service, Docker, Kubernetes) inject database passwords and API keys as environment variables so they never live in source control.
+
+**Advanced notes:**
+- `ASPNETCORE_ENVIRONMENT` (Development / Staging / Production) controls which environment-specific config and behavior load.
+- For local development secrets, use the Secret Manager tool (`dotnet user-secrets`) instead of editing files.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/#environment-variables
+- https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets
+
+### Options Pattern
+
+**Definition:** The Options pattern binds a configuration section to a strongly-typed C# class.
+
+**Explanation:**
+- Instead of reading loose strings, you inject a typed object.
+- Gives you compile-time safety and IntelliSense.
+- Register it once, then inject `IOptions<T>` anywhere.
+
+**Basic example:**
+```csharp
+// 1. The settings class
+public class EmailSettings
+{
+    public string FromAddress { get; set; } = "";
+    public int Port { get; set; }
+}
+
+// 2. Bind it in Program.cs
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
+// 3. Inject and use it
+public class EmailService(IOptions<EmailSettings> options)
+{
+    private readonly EmailSettings _settings = options.Value;
+    public void Send() => Console.WriteLine(_settings.FromAddress);
+}
+```
+
+**Real-world example:** Group all email settings (host, port, sender) into one `EmailSettings` object that your `EmailService` depends on, instead of scattering string lookups.
+
+**Advanced notes:**
+- `IOptionsSnapshot<T>` re-reads config per request (useful for values that change); `IOptionsMonitor<T>` notifies you of changes at runtime.
+- Add validation with `.ValidateDataAnnotations()` and `.ValidateOnStart()` to fail fast on bad config.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/options
+
+---
+
+## Module 32: Caching
+
+Caching stores expensive results temporarily so repeated requests are faster and cheaper.
+
+### Memory Cache
+
+**Definition:** Memory cache (`IMemoryCache`) stores data in the memory of the running app.
+
+**Explanation:**
+- Fastest cache option because data stays in process.
+- Lost when the app restarts.
+- Works only for a single server (not shared across instances).
+
+**Basic example:**
+```csharp
+builder.Services.AddMemoryCache();
+
+public class ProductService(IMemoryCache cache, AppDbContext db)
+{
+    public async Task<List<Product>> GetProductsAsync()
+    {
+        return await cache.GetOrCreateAsync("all_products", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+            return await db.Products.ToListAsync();
+        }) ?? [];
+    }
+}
+```
+
+**Real-world example:** Cache a rarely-changing list like product categories for 5 minutes to avoid hitting the database on every page load.
+
+**Advanced notes:**
+- Use **sliding expiration** (reset timer on each access) for session-like data, **absolute expiration** for time-bound data.
+- Set a size limit to avoid memory pressure; the cache can evict entries under load.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/performance/caching/memory
+- https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview
+
+### Distributed Cache
+
+**Definition:** A distributed cache (`IDistributedCache`) stores data in an external store shared by all app instances.
+
+**Explanation:**
+- Survives app restarts and is shared across multiple servers.
+- Stores data as `byte[]` or `string` (you serialize objects yourself, usually as JSON).
+- Backed by Redis, SQL Server, or other providers.
+
+**Basic example:**
+```csharp
+public class CartService(IDistributedCache cache)
+{
+    public async Task SaveAsync(string userId, Cart cart)
+    {
+        var json = JsonSerializer.Serialize(cart);
+        await cache.SetStringAsync($"cart:{userId}", json,
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+            });
+    }
+
+    public async Task<Cart?> GetAsync(string userId)
+    {
+        var json = await cache.GetStringAsync($"cart:{userId}");
+        return json is null ? null : JsonSerializer.Deserialize<Cart>(json);
+    }
+}
+```
+
+**Real-world example:** Store shopping carts in a distributed cache so a user keeps their cart even when a load balancer routes them to a different server.
+
+**Advanced notes:**
+- Use the `IDistributedCache` interface so you can swap the backing store without changing code.
+- For local development, `AddDistributedMemoryCache()` gives the same API without external infrastructure.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed
+- https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview
+
+### Redis Basics
+
+**Definition:** Redis is a fast in-memory data store commonly used as a distributed cache.
+
+**Explanation:**
+- Stores key-value data in memory, with optional persistence.
+- Very low latency, supports expiration on keys.
+- The standard choice for a shared cache in .NET apps.
+
+**Basic example:**
+```csharp
+// Install: Microsoft.Extensions.Caching.StackExchangeRedis
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "Shop_";
+});
+// Now inject IDistributedCache as usual — it uses Redis underneath.
+```
+
+**Real-world example:** Run Redis as a shared cache for session data, rate-limit counters, and frequently-read lookups across all your API servers.
+
+**Advanced notes:**
+- Redis supports more than caching: pub/sub, lists, sorted sets, and atomic counters.
+- Set sensible expirations and a memory eviction policy so it never runs out of memory.
+- Treat the cache as expendable: your app must still work (just slower) if Redis is down.
+
+**Reference links:**
+- https://redis.io/docs/latest/
+- https://learn.microsoft.com/en-us/aspnet/core/performance/caching/distributed#distributed-redis-cache
+
+---
+
+## Module 33: Background Jobs
+
+Background jobs run work outside the request/response cycle, so users don't wait for slow tasks.
+
+### Hosted Services
+
+**Definition:** A hosted service (`IHostedService`) is a component whose lifetime is tied to the app, used to run background work.
+
+**Explanation:**
+- Starts when the app starts, stops when the app stops.
+- Good for tasks that need explicit start/stop logic.
+- Registered with `AddHostedService`.
+
+**Basic example:**
+```csharp
+public class StartupTasks : IHostedService
+{
+    public Task StartAsync(CancellationToken ct)
+    {
+        Console.WriteLine("App is starting — warming up cache.");
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken ct)
+    {
+        Console.WriteLine("App is shutting down — cleaning up.");
+        return Task.CompletedTask;
+    }
+}
+
+builder.Services.AddHostedService<StartupTasks>();
+```
+
+**Real-world example:** On startup, connect to a message queue or pre-load reference data; on shutdown, flush pending work cleanly.
+
+**Advanced notes:**
+- Hosted services run in the same process as the web app, so heavy CPU work can affect request handling.
+- For most recurring/looping work, prefer `BackgroundService` (below), which is built on `IHostedService`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/generic-host
+
+### BackgroundService
+
+**Definition:** `BackgroundService` is a base class that simplifies long-running background tasks via a single `ExecuteAsync` method.
+
+**Explanation:**
+- You override one method and write your loop there.
+- It handles the start/stop plumbing for you.
+- The `CancellationToken` signals when to stop.
+
+**Basic example:**
+```csharp
+public class EmailQueueWorker(ILogger<EmailQueueWorker> logger) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            logger.LogInformation("Checking for queued emails...");
+            // process queued emails here
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+        }
+    }
+}
+
+builder.Services.AddHostedService<EmailQueueWorker>();
+```
+
+**Real-world example:** A worker that polls a queue every 30 seconds and sends any pending emails, or cleans up expired records overnight.
+
+**Advanced notes:**
+- A `BackgroundService` is a singleton, so to use scoped services (like a `DbContext`) create a scope inside the loop with `IServiceScopeFactory`.
+- Always pass and honor the `stoppingToken` so the app can shut down gracefully.
+- Wrap loop bodies in try-catch; an unhandled exception can stop the whole service.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services#backgroundservice-base-class
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/workers
+
+---
+
+## Module 34: File Uploads
+
+File uploads let clients send files (images, documents) to your API.
+
+### Upload APIs
+
+**Definition:** An upload API is an endpoint that accepts a file from the client, usually as `multipart/form-data`.
+
+**Explanation:**
+- Use `IFormFile` to represent the uploaded file.
+- The file arrives as part of a form, not raw JSON.
+- You can read its stream and save it.
+
+**Basic example:**
+```csharp
+[HttpPost("upload")]
+public async Task<IActionResult> Upload(IFormFile file)
+{
+    if (file.Length == 0) return BadRequest("Empty file.");
+
+    var path = Path.Combine("uploads", file.FileName);
+    using var stream = new FileStream(path, FileMode.Create);
+    await file.CopyToAsync(stream);
+
+    return Ok(new { file.FileName, file.Length });
+}
+```
+
+**Real-world example:** A profile-picture endpoint where users upload an image that your API stores and links to their account.
+
+**Advanced notes:**
+- Use `IFormFileCollection` or `List<IFormFile>` for multiple files.
+- For very large files, use streaming instead of buffering the whole file in memory.
+- Never trust the client-supplied filename; generate your own to avoid path traversal and overwrites.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#upload-large-files-with-streaming
+
+### Validation
+
+**Definition:** Upload validation checks that a file is safe and allowed before you store it.
+
+**Explanation:**
+- Check file size, extension, and content type.
+- Reject anything outside your allow-list.
+- Protects your storage and your users.
+
+**Basic example:**
+```csharp
+var allowed = new[] { ".jpg", ".png", ".pdf" };
+var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+if (!allowed.Contains(ext))
+    return BadRequest("File type not allowed.");
+
+if (file.Length > 5 * 1024 * 1024) // 5 MB
+    return BadRequest("File too large.");
+```
+
+**Real-world example:** Limit document uploads to PDFs under 5 MB so users can't fill your disk or upload executables.
+
+**Advanced notes:**
+- Extension and content-type checks can be faked; for strong guarantees, validate the file's signature (magic bytes).
+- Configure server limits (`MultipartBodyLengthLimit`, Kestrel `MaxRequestBodySize`) to match your size policy.
+- Scan untrusted uploads for malware before serving them back to users.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#validation
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#security-considerations
+
+### Storage Options
+
+**Definition:** Storage options are the places you can keep uploaded files: local disk, cloud blob storage, or a database.
+
+**Explanation:**
+- **Local disk:** simple, but doesn't scale across servers.
+- **Cloud blob storage** (Azure Blob, Amazon S3): scalable and durable; the common production choice.
+- **Database:** keeps files transactional with data, but bloats the database.
+
+**Basic example:**
+```csharp
+// Conceptual: save to Azure Blob Storage
+var blobClient = containerClient.GetBlobClient(uniqueFileName);
+await blobClient.UploadAsync(file.OpenReadStream(), overwrite: true);
+var fileUrl = blobClient.Uri.ToString(); // store this URL in your DB
+```
+
+**Real-world example:** Store user uploads in Azure Blob Storage and save only the resulting URL in your database, so files scale independently from the app.
+
+**Advanced notes:**
+- Store file metadata (name, size, content type, URL) in the database and the bytes in blob storage.
+- Use a CDN in front of blob storage for fast global delivery of public files.
+- For private files, generate short-lived signed URLs (SAS tokens) instead of making the container public.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-dotnet-get-started
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads#storage-scenarios
+
+---
+
+## Module 35: Email Services
+
+Email services let your app send messages like confirmations, alerts, and password resets.
+
+### SMTP
+
+**Definition:** SMTP (Simple Mail Transfer Protocol) is the standard protocol for sending email.
+
+**Explanation:**
+- Your app connects to an SMTP server and hands it the message.
+- The SMTP server delivers it to the recipient.
+- .NET sends SMTP mail using `SmtpClient` (or `MailKit` for a modern client).
+
+**Basic example:**
+```csharp
+// Using MailKit (recommended over the legacy SmtpClient)
+var message = new MimeMessage();
+message.From.Add(MailboxAddress.Parse("noreply@shop.com"));
+message.To.Add(MailboxAddress.Parse("user@example.com"));
+message.Subject = "Welcome";
+message.Body = new TextPart("plain") { Text = "Thanks for signing up!" };
+
+using var client = new SmtpClient();
+await client.ConnectAsync("smtp.host.com", 587, SecureSocketOptions.StartTls);
+await client.AuthenticateAsync("user", "password");
+await client.SendAsync(message);
+await client.DisconnectAsync(true);
+```
+
+**Real-world example:** Send a "welcome" email through your company SMTP server when a user registers.
+
+**Advanced notes:**
+- The built-in `System.Net.Mail.SmtpClient` is considered legacy; Microsoft recommends MailKit for new code.
+- Send email from a background job, not inside the web request, so slow delivery never blocks the user.
+- Always use TLS (`StartTls`) and keep credentials in configuration/secrets.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.net.mail.smtpclient
+- https://github.com/jstedfast/MailKit
+
+### Third-Party Providers
+
+**Definition:** Third-party email providers (SendGrid, Mailgun, Amazon SES) deliver email through an API or managed SMTP, handling deliverability for you.
+
+**Explanation:**
+- You call their API or SMTP endpoint with an API key.
+- They manage reputation, retries, bounce handling, and analytics.
+- More reliable at scale than running your own mail server.
+
+**Basic example:**
+```csharp
+// Conceptual: SendGrid
+var client = new SendGridClient(apiKey);
+var msg = MailHelper.CreateSingleEmail(
+    from: new EmailAddress("noreply@shop.com"),
+    to: new EmailAddress("user@example.com"),
+    subject: "Order shipped",
+    plainTextContent: "Your order is on its way!",
+    htmlContent: "<strong>Your order is on its way!</strong>");
+await client.SendEmailAsync(msg);
+```
+
+**Real-world example:** Use SendGrid to send order confirmations and track open/click rates without managing email infrastructure yourself.
+
+**Advanced notes:**
+- Configure SPF, DKIM, and DMARC DNS records so your emails aren't marked as spam.
+- Use the provider's webhooks to track bounces, opens, and clicks.
+- Keep API keys in environment variables or a secret store, never in source.
+
+**Reference links:**
+- https://www.twilio.com/docs/sendgrid/for-developers/sending-email/v3-csharp-code-example
+- https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/email/send-email
+
+### Templates
+
+**Definition:** Email templates are reusable layouts where you fill in dynamic values to produce the final message.
+
+**Explanation:**
+- Keep the HTML/text structure separate from the data.
+- Insert values (name, order number) into placeholders.
+- Makes emails consistent and easy to update.
+
+**Basic example:**
+```csharp
+// Simple placeholder replacement
+string template = "<h1>Hi {{name}}</h1><p>Your order {{orderId}} shipped.</p>";
+
+string body = template
+    .Replace("{{name}}", user.Name)
+    .Replace("{{orderId}}", order.Id.ToString());
+// then send 'body' as the HTML content
+```
+
+**Real-world example:** One "order shipped" template reused for every shipment, with the customer name and order number filled in per email.
+
+**Advanced notes:**
+- For complex emails, use a templating engine (Razor, Scriban, Handlebars) instead of string replacement.
+- Many providers (SendGrid) host templates server-side, so you send only the data and a template ID.
+- Always include a plain-text version alongside HTML for clients that don't render HTML.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/views/razor
+- https://www.twilio.com/docs/sendgrid/ui/sending-email/how-to-send-an-email-with-dynamic-templates
+
+---
+
+## What to build next
+
+Take your Products or Orders API and add real-world polish: move all settings into `appsettings.json` bound through the Options pattern, cache the product list with `IMemoryCache`, add a `BackgroundService` that logs a heartbeat every minute, add an image-upload endpoint with validation, and send a confirmation email (using MailKit against a test SMTP server like [smtp4dev](https://github.com/rnwood/smtp4dev) or Mailtrap). This combines all five modules into one realistic feature set.
+
+Next: **[Part 12 — Advanced Topics](/feature/techstack/donNetCore/part-12-advanced-topics)**.

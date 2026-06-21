@@ -1,0 +1,359 @@
+---
+title: "Database Access with EF Core"
+sidebarTitle: "Part 6: EF Core"
+description: "Accessing databases with Entity Framework Core: DbContext, migrations, and advanced queries."
+icon: "database"
+---
+
+Entity Framework Core (EF Core) is the ORM that lets you work with a database using C# objects instead of raw SQL.
+
+---
+
+## Module 16: Entity Framework Core
+
+### DbContext
+
+**Definition:** `DbContext` is the main EF Core class that manages the database connection and your entities.
+
+**Explanation:**
+- It represents a session with the database.
+- It exposes `DbSet<T>` properties — one per table.
+- You query and save data through it.
+
+**Basic example:**
+```csharp
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions options) : base(options) { }
+    public DbSet<Product> Products { get; set; }
+}
+```
+
+**Real-world example:** An e-commerce app has an `AppDbContext` with `DbSet`s for `Products`, `Orders`, and `Customers`.
+
+**Advanced notes:**
+- Register it as **scoped** with `AddDbContext<AppDbContext>(...)`.
+- `DbContext` is not thread-safe; do not share one instance across threads/requests.
+- It tracks changes to entities so it knows what to update on save.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/
+- https://learn.microsoft.com/en-us/ef/core/
+
+---
+
+### Entities
+
+**Definition:** An entity is a C# class that maps to a database table; each instance is a row.
+
+**Explanation:**
+- A plain class with properties becomes a table.
+- Properties become columns.
+- A property named `Id` (or `ClassNameId`) is treated as the primary key by convention.
+
+**Basic example:**
+```csharp
+public class Product
+{
+    public int Id { get; set; }        // primary key
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+```
+
+**Real-world example:** A `Customer` entity with `Id`, `Name`, and `Email` maps to a `Customers` table.
+
+**Advanced notes:**
+- Configure mapping with Data Annotations (`[Required]`, `[MaxLength]`) or Fluent API in `OnModelCreating`.
+- Fluent API is preferred for complex rules and keeps entities clean.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/modeling/
+- https://learn.microsoft.com/en-us/ef/core/modeling/entity-types
+
+---
+
+### Relationships
+
+**Definition:** Relationships define how entities connect: one-to-one, one-to-many, or many-to-many.
+
+**Explanation:**
+- Use **navigation properties** to link entities.
+- A foreign key property (e.g., `CategoryId`) connects rows.
+- EF Core infers most relationships by convention.
+
+**Basic example:**
+```csharp
+public class Category
+{
+    public int Id { get; set; }
+    public List<Product> Products { get; set; } = new(); // one-to-many
+}
+
+public class Product
+{
+    public int Id { get; set; }
+    public int CategoryId { get; set; }     // foreign key
+    public Category Category { get; set; }  // navigation
+}
+```
+
+**Real-world example:** One `Order` has many `OrderItems`; each item belongs to one order.
+
+**Advanced notes:**
+- Many-to-many can use an implicit join table or an explicit join entity.
+- Configure cascade delete behavior carefully to avoid accidentally deleting related data.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/modeling/relationships
+- https://learn.microsoft.com/en-us/ef/core/modeling/relationships/conventions
+
+---
+
+### CRUD Operations
+
+**Definition:** CRUD means Create, Read, Update, and Delete — the four basic database operations.
+
+**Explanation:**
+- **Create:** add an entity and `SaveChanges`.
+- **Read:** query with LINQ.
+- **Update:** change a tracked entity and save.
+- **Delete:** remove an entity and save.
+
+**Basic example:**
+```csharp
+// Create
+db.Products.Add(new Product { Name = "Pen", Price = 10 });
+await db.SaveChangesAsync();
+
+// Read
+var product = await db.Products.FindAsync(1);
+
+// Update
+product.Price = 12;
+await db.SaveChangesAsync();
+
+// Delete
+db.Products.Remove(product);
+await db.SaveChangesAsync();
+```
+
+**Real-world example:** A product admin page that lets staff add, view, edit, and delete products.
+
+**Advanced notes:**
+- Use the async methods (`ToListAsync`, `SaveChangesAsync`) in web apps.
+- `SaveChanges` runs inside a transaction by default — all changes succeed or none do.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/saving/basic
+- https://learn.microsoft.com/en-us/ef/core/querying/
+
+---
+
+## Module 17: Migrations
+
+### Creating Migrations
+
+**Definition:** A migration is a generated file describing schema changes to apply to the database.
+
+**Explanation:**
+- After changing your entities, create a migration to capture the difference.
+- EF Core generates code to add/alter tables.
+- Migrations keep your database schema in sync with your models.
+
+**Basic example:**
+```bash
+dotnet ef migrations add InitialCreate
+```
+This creates a migration file with `Up()` (apply) and `Down()` (revert) methods.
+
+**Real-world example:** After adding a `PhoneNumber` property to `Customer`, you create a migration that adds the new column.
+
+**Advanced notes:**
+- Install the tool with `dotnet tool install --global dotnet-ef`.
+- Review the generated migration before applying it — it can occasionally do unintended things (e.g., drop a column).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/
+- https://learn.microsoft.com/en-us/ef/core/cli/dotnet
+
+---
+
+### Updating Database
+
+**Definition:** Updating the database applies pending migrations to create or change the actual schema.
+
+**Explanation:**
+- Run a command to execute migrations against the database.
+- It brings the database up to the latest migration.
+- Can also roll back to a previous migration.
+
+**Basic example:**
+```bash
+dotnet ef database update
+```
+
+**Real-world example:** Deploying a new app version that requires schema changes — the migration runs and adds the new tables/columns.
+
+**Advanced notes:**
+- For production, generate an SQL script (`dotnet ef migrations script`) for a DBA to review and run.
+- You can apply migrations at startup with `db.Database.Migrate()`, but be cautious in multi-instance deployments.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying
+- https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/
+
+---
+
+### Seeding Data
+
+**Definition:** Seeding inserts initial/default data into the database during migration.
+
+**Explanation:**
+- Define starter rows (e.g., default roles, categories) in `OnModelCreating`.
+- EF Core inserts them when migrations run.
+- Ensures the app has essential baseline data.
+
+**Basic example:**
+```csharp
+protected override void OnModelCreating(ModelBuilder builder)
+{
+    builder.Entity<Category>().HasData(
+        new Category { Id = 1, Name = "Books" },
+        new Category { Id = 2, Name = "Electronics" });
+}
+```
+
+**Real-world example:** Seeding default user roles ("Admin", "User") so the app works right after first deployment.
+
+**Advanced notes:**
+- `HasData` requires fixed primary key values.
+- For complex/runtime seeding (e.g., creating an admin account), run custom code at startup instead.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/modeling/data-seeding
+- https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/
+
+---
+
+## Module 18: Advanced EF Core
+
+### Eager Loading
+
+**Definition:** Eager loading fetches related data together with the main query using `Include`.
+
+**Explanation:**
+- Use `.Include()` to load navigation properties in the same query.
+- Avoids extra round-trips to the database.
+- Best when you know you will need the related data.
+
+**Basic example:**
+```csharp
+var orders = await db.Orders
+    .Include(o => o.Items)      // load items together
+    .ToListAsync();
+```
+
+**Real-world example:** Loading an order with all its line items in one query to display an order details page.
+
+**Advanced notes:**
+- Use `.ThenInclude()` for nested relationships (`o.Items.Product`).
+- Over-including can pull too much data; include only what you need.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/querying/related-data/eager
+- https://learn.microsoft.com/en-us/ef/core/querying/related-data/
+
+---
+
+### Lazy Loading
+
+**Definition:** Lazy loading automatically fetches related data the first time you access a navigation property.
+
+**Explanation:**
+- Related data loads "on demand" when you touch the property.
+- Requires extra setup (proxies + `virtual` navigation properties).
+- Convenient but can cause hidden performance problems.
+
+**Basic example:**
+```csharp
+// navigation must be virtual, and proxies enabled
+public virtual Category Category { get; set; }
+
+var product = await db.Products.FindAsync(1);
+var name = product.Category.Name; // triggers a separate query
+```
+
+**Real-world example:** Accidentally accessing `order.Customer` inside a loop over 100 orders, causing 100 extra queries.
+
+**Advanced notes:**
+- Enable via `UseLazyLoadingProxies()` and the proxies package.
+- It is the main cause of the **N+1 query problem**; prefer eager loading in loops.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/querying/related-data/lazy
+- https://learn.microsoft.com/en-us/ef/core/querying/related-data/
+
+---
+
+### Explicit Loading
+
+**Definition:** Explicit loading manually loads related data later, on demand, with code you control.
+
+**Explanation:**
+- Load the main entity first, then explicitly load related data when needed.
+- Use `Entry(entity).Reference(...)` or `.Collection(...)` then `.LoadAsync()`.
+- Gives precise control over when related data is fetched.
+
+**Basic example:**
+```csharp
+var order = await db.Orders.FindAsync(1);
+await db.Entry(order).Collection(o => o.Items).LoadAsync(); // load now
+```
+
+**Real-world example:** Loading an order's items only if the user clicks "show details", avoiding fetching them upfront.
+
+**Advanced notes:**
+- Useful when related data is needed only conditionally.
+- You can filter while loading a collection with `.Query()` before `.LoadAsync()`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit
+- https://learn.microsoft.com/en-us/ef/core/querying/related-data/
+
+---
+
+### Tracking vs No Tracking
+
+**Definition:** Tracking lets EF Core monitor entities for changes; no-tracking skips this for read-only speed.
+
+**Explanation:**
+- **Tracking (default):** EF watches entities so it can save updates later.
+- **No-tracking:** `AsNoTracking()` returns entities EF will not monitor — faster, less memory.
+- Use no-tracking for read-only queries.
+
+**Basic example:**
+```csharp
+var products = await db.Products
+    .AsNoTracking()           // read-only, faster
+    .ToListAsync();
+```
+
+**Real-world example:** A report page that only displays data (never edits it) uses `AsNoTracking()` for better performance.
+
+**Advanced notes:**
+- Tracked entities can be updated by just changing them and calling `SaveChanges`.
+- You cannot save changes on no-tracking entities unless you reattach them.
+- Set no-tracking as the default for read-heavy contexts via `QueryTrackingBehavior`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/ef/core/querying/tracking
+- https://learn.microsoft.com/en-us/ef/core/performance/efficient-querying
+
+---
+
+## What to build next
+
+Create a small EF Core app with `Category` and `Product` entities (one-to-many), run migrations to create the database, seed two categories, and implement full CRUD. Add an endpoint that returns products with their category using `Include`, and a read-only report endpoint using `AsNoTracking`.
+
+Next: **[Part 7 — Building REST APIs](/feature/techstack/donNetCore/part-07-rest-apis)**.

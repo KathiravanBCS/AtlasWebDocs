@@ -1,0 +1,58 @@
+---
+title: API documentation & the playground
+sidebarTitle: API & playground
+description: Point Mintlify at an OpenAPI spec to generate reference pages and an interactive "try it" playground.
+icon: plug
+---
+
+This is Mintlify's strongest feature. Point it at an **OpenAPI** (or **AsyncAPI**)
+spec and it generates reference pages **and** an interactive "try it" playground.
+
+<Steps>
+  <Step title="Add a valid spec">
+    Drop `openapi.json` (or `.yaml`) into the repo. Validate it first:
+
+    ```bash
+    mint openapi-check api-reference/openapi.json
+    ```
+  </Step>
+  <Step title="Reference it in docs.json">
+    ```json
+    "api": { "openapi": "api-reference/openapi.json" }
+    ```
+
+    Mintlify auto-generates a page per endpoint. You don't hand-write them.
+  </Step>
+  <Step title="Override a single endpoint when needed">
+    Create an MDX page whose frontmatter targets one operation, then add prose
+    around the auto-generated playground:
+
+    ```mdx
+    ---
+    title: Create a user
+    openapi: "POST /users"
+    ---
+    ```
+  </Step>
+</Steps>
+
+## Documenting auth
+
+Express the scheme in your spec's `securitySchemes`; the playground renders the
+right input automatically.
+
+```http
+Authorization: Bearer <token>     # bearer
+x-api-key: <key>                   # apiKey header
+Authorization: Basic <base64>      # basic
+```
+
+<Warning>
+  The spec is the source of truth for the API reference. If endpoints look wrong
+  in the docs, fix the OpenAPI file — don't patch the rendered output. A spec that
+  fails `openapi-check` will silently produce incomplete reference pages.
+</Warning>
+
+<Card title="Next: AI-native documentation" icon="arrow-right" href="/feature/mintlify/ai-native">
+  The assistant, semantic search, llms.txt, and MCP.
+</Card>

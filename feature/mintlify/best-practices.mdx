@@ -1,0 +1,39 @@
+---
+title: Best practices checklist
+sidebarTitle: Best practices
+description: The structure, API, quality, and AI-readiness habits to lock in — plus a pre-launch checklist.
+icon: shield-check
+---
+
+<CardGroup cols={2}>
+  <Card title="Structure" icon="sitemap">
+    One job per page · real headings · stable URLs · every page listed in `docs.json`.
+  </Card>
+  <Card title="API docs" icon="code">
+    Spec is the source of truth · validate with `openapi-check` · document auth in the spec.
+  </Card>
+  <Card title="Quality gates" icon="shield-check">
+    `mint broken-links` in CI · PR previews reviewed · no orphan pages merged.
+  </Card>
+  <Card title="AI readiness" icon="robot">
+    Clean Markdown · descriptive frontmatter · enable assistant + contextual menu.
+  </Card>
+</CardGroup>
+
+## Pre-launch checklist
+
+- [ ] `docs.json` validates and includes `$schema`
+- [ ] Light/dark logos and favicon set
+- [ ] Every page reachable from `navigation` (no orphans)
+- [ ] OpenAPI spec passes `mint openapi-check`
+- [ ] Custom domain configured
+- [ ] `mint broken-links` runs clean in CI
+- [ ] Redirects added for any changed URLs
+- [ ] SEO `description` written on every page
+- [ ] Analytics integration connected
+- [ ] AI assistant and contextual menu enabled
+- [ ] SSO / access control configured (if internal)
+
+<Card title="Next: common pitfalls" icon="arrow-right" href="/feature/mintlify/pitfalls">
+  Symptoms, causes, and fixes.
+</Card>

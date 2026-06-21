@@ -1,0 +1,115 @@
+---
+title: Backend Tech Stack
+sidebarTitle: Overview
+description: The complete, categorized backend technology stack — every framework, database, AI tool, and service we use, with descriptions and study links.
+icon: server
+---
+
+<Info>
+  This is the canonical reference for our **backend stack** — the consolidated
+  inventory across all APIs, AI services, agents, MCP servers, data services, and
+  infrastructure, grouped by architectural category and deduplicated. Each technology
+  has a description and a **study link**. The Engineering Playbook's
+  [Technology Decisions](/feature/playbook/technology-decisions) section points here.
+</Info>
+
+## Categories
+
+<CardGroup cols={2}>
+  <Card title="Backend Frameworks" icon="server" href="/feature/techstack/backend/frameworks">
+    NestJS ecosystem, platform adapters, and the .NET stack.
+  </Card>
+  <Card title="Runtime Environment" icon="microchip" href="/feature/techstack/backend/runtime">
+    Node.js and the TypeScript runtimes.
+  </Card>
+  <Card title="Database & ORM" icon="database" href="/feature/techstack/backend/database">
+    PostgreSQL, drivers, Prisma, Drizzle, and Dapper.
+  </Card>
+  <Card title="Authentication & Authorization" icon="lock" href="/feature/techstack/backend/auth">
+    Azure MSAL, JWT, Passport, JWKS, and Azure AD.
+  </Card>
+  <Card title="Microsoft Ecosystem" icon="microsoft" href="/feature/techstack/backend/microsoft">
+    Microsoft Graph integration.
+  </Card>
+  <Card title="API Development" icon="plug" href="/feature/techstack/backend/api">
+    REST frameworks and OpenAPI documentation.
+  </Card>
+  <Card title="Validation & DTOs" icon="circle-check" href="/feature/techstack/backend/validation">
+    Class Validator, Class Transformer, and Zod.
+  </Card>
+  <Card title="AI & Agent Frameworks" icon="robot" href="/feature/techstack/backend/ai">
+    LangChain and LangGraph ecosystems.
+  </Card>
+  <Card title="Model Context Protocol" icon="diagram-project" href="/feature/techstack/backend/mcp">
+    The MCP SDK for exposing tools to agents.
+  </Card>
+  <Card title="Vector Databases & RAG" icon="magnifying-glass" href="/feature/techstack/backend/vector-rag">
+    Pinecone, Elasticsearch, and MongoDB.
+  </Card>
+  <Card title="Messaging & Events" icon="envelopes-bulk" href="/feature/techstack/backend/messaging">
+    Azure Service Bus queues.
+  </Card>
+  <Card title="Caching" icon="bolt" href="/feature/techstack/backend/caching">
+    NestJS Cache Manager and core cache.
+  </Card>
+  <Card title="Scheduling & Jobs" icon="clock" href="/feature/techstack/backend/scheduling">
+    NestJS Schedule for cron and background jobs.
+  </Card>
+  <Card title="File Storage & Uploads" icon="folder-open" href="/feature/techstack/backend/storage">
+    Azure Blob Storage and multipart upload processing.
+  </Card>
+  <Card title="Document Processing" icon="file-lines" href="/feature/techstack/backend/documents">
+    HTML, XML, PDF, and headless browser rendering.
+  </Card>
+  <Card title="Query & SQL Processing" icon="terminal" href="/feature/techstack/backend/sql">
+    SQL parsing and query analysis.
+  </Card>
+  <Card title="Observability & Monitoring" icon="chart-line" href="/feature/techstack/backend/observability">
+    Pino logging, OpenTelemetry, and health checks.
+  </Card>
+  <Card title="Security" icon="shield-halved" href="/feature/techstack/backend/security">
+    Helmet, CORS, and rate limiting.
+  </Card>
+  <Card title="Compression & Reactive" icon="compress" href="/feature/techstack/backend/compression-reactive">
+    Fastify Compress and RxJS.
+  </Card>
+  <Card title="Infrastructure & Cloud" icon="cloud" href="/feature/techstack/backend/infrastructure">
+    Bicep IaC and Azure cloud services.
+  </Card>
+  <Card title="Testing" icon="vial" href="/feature/techstack/backend/testing">
+    Jest, TS Jest, Supertest, and NestJS Testing.
+  </Card>
+  <Card title="Development Tooling" icon="screwdriver-wrench" href="/feature/techstack/backend/tooling">
+    TypeScript compiler, env management, and monorepo.
+  </Card>
+  <Card title="Utility Libraries" icon="toolbox" href="/feature/techstack/backend/utilities">
+    UUID and Reflect Metadata.
+  </Card>
+</CardGroup>
+
+## Enterprise backend standard stack
+
+| Layer            | Technologies                                            |
+| ---------------- | ------------------------------------------------------- |
+| API layer        | NestJS · ASP.NET Core Minimal APIs                      |
+| Database layer   | PostgreSQL · Prisma · Drizzle ORM · Dapper              |
+| Authentication   | Azure AD · MSAL · JWT · Passport                        |
+| Documentation    | Swagger · OpenAPI                                       |
+| Cloud            | Azure Blob Storage · Azure Service Bus · Microsoft Graph|
+| Security         | Helmet · Throttler · JWKS                               |
+| Observability    | Pino · OpenTelemetry · Terminus                         |
+| AI platform      | LangChain · LangGraph · MCP · Pinecone · Elasticsearch  |
+| Infrastructure   | Bicep · Azure                                           |
+| Testing          | Jest · Supertest                                        |
+
+## Enterprise AI stack
+
+| Role            | Technology    |
+| --------------- | ------------- |
+| Agent framework | LangGraph     |
+| AI framework    | LangChain     |
+| Protocol        | MCP           |
+| Vector database | Pinecone      |
+| Search engine   | Elasticsearch |
+| Memory store    | MongoDB       |
+| Validation      | Zod           |

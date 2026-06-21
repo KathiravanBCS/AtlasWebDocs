@@ -1,0 +1,35 @@
+---
+title: Development Tooling
+sidebarTitle: Dev Tooling
+description: TypeScript compilation, path resolution, source maps, environment management, and monorepo build tooling.
+icon: screwdriver-wrench
+---
+
+## TypeScript
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **TypeScript** | The compiler and language for backend code (`strict` mode). | [typescriptlang.org/docs](https://www.typescriptlang.org/docs/) |
+| **TSConfig Paths** | Resolves `tsconfig` path aliases at runtime. | [github.com/dividab/tsconfig-paths](https://github.com/dividab/tsconfig-paths) |
+| **Source Map Support** | Maps runtime stack traces back to TypeScript source. | [github.com/evanw/node-source-map-support](https://github.com/evanw/node-source-map-support) |
+
+## Environment Management
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **Dotenv** | Loads environment variables from `.env` files. | [github.com/motdotla/dotenv](https://github.com/motdotla/dotenv) |
+
+## Package & Monorepo Management — Build System
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **TurboRepo** | High-performance monorepo build orchestration and caching. | [turborepo.com/docs](https://turborepo.com/docs) |
+
+<Warning>
+  Never read raw `process.env` scattered across files — load and validate config in
+  one place, per the Playbook's [Deployment Standards](/feature/playbook/deployment-standards).
+</Warning>
+
+<Card title="Next: Utility Libraries" icon="arrow-right" href="/feature/techstack/backend/utilities">
+  UUID and Reflect Metadata.
+</Card>

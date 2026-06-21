@@ -1,0 +1,104 @@
+---
+title: docs.json — the deep dive
+sidebarTitle: docs.json config
+description: Every docs.json property that matters — branding, navbar, API, SEO, and the AI menu.
+icon: brackets-curly
+---
+
+This is the file you'll edit most. Start minimal, then layer in capability.
+
+## Minimal, valid config
+
+```json
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "My Product",
+  "colors": { "primary": "#2563eb" },
+  "navigation": {
+    "groups": [
+      { "group": "Get Started", "pages": ["index"] }
+    ]
+  }
+}
+```
+
+## The properties that matter
+
+<AccordionGroup>
+  <Accordion title="theme & colors — branding baseline" icon="palette">
+    `theme` selects a built-in design (e.g. `mint`, `maple`, `palm`, `willow`,
+    `aspen`). `colors` takes `primary`, plus optional `light` and `dark` shades
+    used for links and accents in each appearance.
+
+    ```json
+    "colors": { "primary": "#3b82f6", "light": "#60a5fa", "dark": "#2563eb" }
+    ```
+  </Accordion>
+
+  <Accordion title="logo, favicon & appearance" icon="image">
+    Provide light/dark logos so the mark stays legible in both modes. `appearance.default`
+    accepts `system`, `light`, or `dark`.
+
+    ```json
+    "logo": { "light": "/logo/light.svg", "dark": "/logo/dark.svg" },
+    "favicon": "/favicon.svg",
+    "appearance": { "default": "system" }
+    ```
+  </Accordion>
+
+  <Accordion title="navbar & footer — global chrome" icon="window-maximize">
+    `navbar.links` are top-right links; `navbar.primary` is the highlighted CTA
+    (a button or a GitHub link). `footer.socials` renders social icons.
+
+    ```json
+    "navbar": {
+      "links": [{ "label": "Dashboard", "href": "https://app.example.com" }],
+      "primary": { "type": "github", "href": "https://github.com/acme/acme" }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="api — playground behavior" icon="plug">
+    Point at one or more specs and control how the interactive playground behaves.
+
+    ```json
+    "api": {
+      "openapi": "api-reference/openapi.json",
+      "playground": { "display": "interactive" },
+      "mdx": { "auth": { "method": "bearer" } }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="seo, search & redirects" icon="magnifying-glass">
+    `seo.indexing` controls whether pages are indexable. `redirects` preserves link
+    equity when URLs change — never delete a page without redirecting it.
+
+    ```json
+    "seo": { "indexing": "navigable" },
+    "redirects": [{ "source": "/old-path", "destination": "/new-path" }]
+    ```
+  </Accordion>
+
+  <Accordion title="contextual — the AI/copy menu" icon="robot">
+    Controls the per-page menu that lets readers (and agents) copy the page as
+    Markdown or open it in ChatGPT/Claude.
+
+    ```json
+    "contextual": {
+      "options": ["copy", "view", "chatgpt", "claude"]
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Keep the `$schema` line. Editors that understand it give you autocomplete and
+  inline validation for every property above — the fastest way to discover what's
+  available without leaving your editor.
+</Tip>
+
+<Card title="Next: the navigation system" icon="arrow-right" href="/feature/mintlify/navigation">
+  Dropdowns, tabs, groups, and pages.
+</Card>

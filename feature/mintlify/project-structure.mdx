@@ -1,0 +1,34 @@
+---
+title: Project structure
+sidebarTitle: Project structure
+description: How a clean Mintlify repository is organized — content plus one config file.
+icon: folder-tree
+---
+
+A clean Mintlify repo is mostly content plus one config file.
+
+```text
+docs/
+├── docs.json            # The single source of configuration
+├── index.mdx            # Landing page
+├── favicon.svg
+├── logo/
+│   ├── light.svg
+│   └── dark.svg
+├── images/              # Screenshots, diagrams
+├── snippets/            # Reusable MDX fragments
+├── essentials/          # Hand-written guides (any folder name)
+├── api-reference/       # API docs + OpenAPI/AsyncAPI specs
+│   └── openapi.json
+└── llms.txt             # (optional) — auto-generated if omitted
+```
+
+<Note>
+  Folder names are conventions, not requirements. Mintlify resolves pages by the
+  **path you list in `docs.json`**, not by directory magic. A page at
+  `guides/auth.mdx` is referenced as `"guides/auth"` (no extension).
+</Note>
+
+<Card title="Next: the CLI" icon="arrow-right" href="/feature/mintlify/cli">
+  Install the tooling and run a local dev server.
+</Card>

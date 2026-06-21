@@ -1,0 +1,41 @@
+---
+title: "Writing content: MDX + frontmatter"
+sidebarTitle: Writing content
+description: How Mintlify pages work — Markdown plus JSX components, with YAML frontmatter on top.
+icon: pen-nib
+---
+
+Every page is MDX — Markdown plus JSX components — with YAML frontmatter on top.
+
+```mdx
+---
+title: Authentication
+description: How to authenticate requests to the API.
+sidebarTitle: Auth
+icon: key
+mode: wide
+---
+
+Body content starts here. You can mix **Markdown** with <Components />.
+```
+
+Frontmatter fields worth knowing:
+
+| Field          | Purpose                                                        |
+| -------------- | ------------------------------------------------------------- |
+| `title`        | Page H1 and browser tab title.                                |
+| `description`  | Subtitle and the default SEO/`og` description.                |
+| `sidebarTitle` | Shorter label for the sidebar when `title` is long.           |
+| `icon`         | Sidebar icon (icon-library name).                             |
+| `mode`         | Layout: `wide`, `center`, `frame`, or `custom`.               |
+| `noindex`      | Set `true` to keep a page out of search engines.              |
+
+<Note>
+  `description` does double duty as your SEO description. Write it for a human
+  skimming search results, not as a keyword dump — it's what shows up under the
+  title on Google.
+</Note>
+
+<Card title="Next: components reference" icon="arrow-right" href="/feature/mintlify/components">
+  Callouts, steps, tabs, cards, and snippets.
+</Card>

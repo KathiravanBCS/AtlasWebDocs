@@ -1,0 +1,212 @@
+---
+title: "Security"
+sidebarTitle: "Part 8: Security"
+description: "Authentication and authorization: JWTs, identity, roles, and policies."
+icon: "shield-halved"
+---
+
+Security covers two questions: who are you (**authentication**) and what are you allowed to do (**authorization**).
+
+---
+
+## Module 23: Authentication
+
+### JWT Authentication
+
+**Definition:** JWT (JSON Web Token) authentication verifies a user using a signed token sent with each request.
+
+**Explanation:**
+- After login, the server issues a signed token containing user info (claims).
+- The client sends it in the `Authorization: Bearer <token>` header.
+- The server validates the signature on each request — no server-side session needed.
+
+**Basic example:**
+```csharp
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new()
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true
+        };
+    });
+```
+
+**Real-world example:** A mobile app logs in once, stores the token, and attaches it to every API call to stay authenticated.
+
+**Advanced notes:**
+- A JWT has three parts: header, payload (claims), and signature, separated by dots.
+- It is **stateless** — tokens are self-contained, which scales well but makes instant revocation harder.
+- Always serve tokens over HTTPS and keep the signing key secret.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/security/authentication/
+- https://jwt.io/introduction
+
+---
+
+### Token Generation
+
+**Definition:** Token generation is the process of creating and signing a JWT when a user logs in.
+
+**Explanation:**
+- Verify the user's credentials first.
+- Build claims (user id, roles), set an expiry, and sign with a secret key.
+- Return the token string to the client.
+
+**Basic example:**
+```csharp
+var claims = new[] { new Claim(ClaimTypes.Name, user.Email) };
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+var token = new JwtSecurityToken(
+    claims: claims,
+    expires: DateTime.UtcNow.AddMinutes(30),
+    signingCredentials: creds);
+
+string jwt = new JwtSecurityTokenHandler().WriteToken(token);
+```
+
+**Real-world example:** A login endpoint returns a 30-minute token after checking the user's email and password.
+
+**Advanced notes:**
+- Keep access tokens short-lived (minutes) to limit damage if leaked.
+- Store the signing key in secrets/environment variables, never in source code.
+- Include only necessary claims; tokens are readable (just base64), only the signature is protected.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/security/authentication/configure-jwt-bearer-authentication
+- https://learn.microsoft.com/en-us/dotnet/api/system.identitymodel.tokens.jwt.jwtsecuritytoken
+
+---
+
+### Refresh Tokens
+
+**Definition:** A refresh token is a long-lived token used to get a new access token without logging in again.
+
+**Explanation:**
+- Access tokens expire quickly; refresh tokens last longer.
+- When the access token expires, the client sends the refresh token to get a new one.
+- Refresh tokens are stored securely and can be revoked.
+
+**Basic example:**
+```
+1. Login → access token (30 min) + refresh token (7 days)
+2. Access token expires
+3. POST /refresh with refresh token → new access token
+```
+
+**Real-world example:** A user stays logged into an app for days without re-entering their password, because the app silently refreshes tokens.
+
+**Advanced notes:**
+- Store refresh tokens server-side (hashed) so they can be revoked on logout or theft.
+- Use **rotation**: issue a new refresh token each time and invalidate the old one to detect reuse.
+- Unlike access tokens, refresh tokens need a server lookup, enabling revocation.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/security/authentication/
+- https://datatracker.ietf.org/doc/html/rfc6749#section-1.5
+
+---
+
+## Module 24: Authorization
+
+### Roles
+
+**Definition:** Role-based authorization grants access based on a user's assigned role (e.g., Admin, User).
+
+**Explanation:**
+- Users are given roles; endpoints require specific roles.
+- Use `[Authorize(Roles = "...")]` to restrict access.
+- Simple and common for coarse-grained permissions.
+
+**Basic example:**
+```csharp
+[Authorize(Roles = "Admin")]
+[HttpDelete("{id}")]
+public IActionResult Delete(int id) => NoContent();
+```
+
+**Real-world example:** Only users with the "Admin" role can delete products; regular users get 403 Forbidden.
+
+**Advanced notes:**
+- Roles are stored as claims inside the JWT.
+- Roles get rigid as apps grow; policies/claims offer more flexibility.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles
+- https://learn.microsoft.com/en-us/aspnet/core/security/authorization/
+
+---
+
+### Policies
+
+**Definition:** Policy-based authorization defines named rules that can combine multiple requirements.
+
+**Explanation:**
+- Register a named policy with its requirements.
+- Apply it with `[Authorize(Policy = "...")]`.
+- More flexible than roles — can check claims, values, or custom logic.
+
+**Basic example:**
+```csharp
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Over18", p => p.RequireClaim("Age", "18"));
+});
+
+[Authorize(Policy = "Over18")]
+public IActionResult BuyAlcohol() => Ok();
+```
+
+**Real-world example:** A "CanManageBilling" policy that requires both a specific role and a department claim.
+
+**Advanced notes:**
+- Custom requirements use `IAuthorizationRequirement` + an `AuthorizationHandler`.
+- Policies centralize authorization logic, keeping controllers clean.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/security/authorization/policies
+- https://learn.microsoft.com/en-us/aspnet/core/security/authorization/
+
+---
+
+### Claims-Based Authorization
+
+**Definition:** Claims-based authorization makes decisions using claims — pieces of information about the user.
+
+**Explanation:**
+- A claim is a key-value fact about the user (e.g., `Department = Sales`).
+- Claims live inside the authenticated token/identity.
+- Authorization checks whether the user has the required claim/value.
+
+**Basic example:**
+```csharp
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SalesOnly", p => p.RequireClaim("Department", "Sales"));
+});
+```
+
+**Real-world example:** Granting access to sales reports only to users whose token includes `Department = Sales`.
+
+**Advanced notes:**
+- Roles are really just a special kind of claim.
+- Claims-based design scales better than role explosions for fine-grained access.
+- Access the current user's claims via `User.Claims` in a controller.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/security/authorization/claims
+- https://learn.microsoft.com/en-us/aspnet/core/security/authorization/
+
+---
+
+## What to build next
+
+Add security to your API: a `/login` endpoint that validates a user and returns a JWT, `[Authorize]` on protected endpoints, an "Admin"-only delete endpoint, and a claims-based policy for one route. Test it by calling endpoints with and without a valid token.
+
+Next: **[Part 9 — Testing](/feature/techstack/donNetCore/part-09-testing)**.

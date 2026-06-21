@@ -1,0 +1,88 @@
+---
+title: Components reference
+sidebarTitle: Components
+description: The Mintlify components you'll actually reach for — callouts, steps, tabs, cards, and snippets.
+icon: cubes
+---
+
+Mintlify ships a component library so you rarely need raw HTML. The ones you'll
+actually reach for:
+
+## Callouts
+
+<Note>Neutral context the reader should keep in mind.</Note>
+<Tip>A recommended path or shortcut.</Tip>
+<Warning>Something that can cause data loss or breakage.</Warning>
+<Info>Supplementary detail that isn't critical.</Info>
+<Check>A success state or confirmation.</Check>
+
+## Steps for sequential instructions
+
+```mdx
+<Steps>
+  <Step title="Install">Run the installer.</Step>
+  <Step title="Configure">Set environment variables.</Step>
+  <Step title="Deploy">Ship it.</Step>
+</Steps>
+```
+
+## Tabs for alternative paths
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install my-sdk
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add my-sdk
+    ```
+  </Tab>
+</Tabs>
+
+## CodeGroup for one snippet across languages
+
+<CodeGroup>
+
+```ts TypeScript
+import { Client } from "my-sdk";
+const client = new Client({ apiKey: process.env.API_KEY });
+```
+
+```python Python
+from my_sdk import Client
+client = Client(api_key=os.environ["API_KEY"])
+```
+
+</CodeGroup>
+
+## Cards, accordions, and frames
+
+<CardGroup cols={2}>
+  <Card title="Card" icon="square">
+    Linkable callout box; pair inside `CardGroup` for a grid.
+  </Card>
+  <Card title="Accordion" icon="chevron-down">
+    Collapsible content; group with `AccordionGroup`.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Wrap screenshots in `<Frame>` to get a consistent border, caption, and rounded
+  container — it makes a docs site look intentional instead of pasted-together.
+</Tip>
+
+## Reusable snippets (DRY content)
+
+Put shared fragments in `snippets/` and import them so one edit updates everywhere.
+
+```mdx
+import Disclaimer from "/snippets/disclaimer.mdx";
+
+<Disclaimer />
+```
+
+<Card title="Next: API & the playground" icon="arrow-right" href="/feature/mintlify/api-playground">
+  OpenAPI specs and the interactive "try it" panel.
+</Card>

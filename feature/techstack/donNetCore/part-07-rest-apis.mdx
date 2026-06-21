@@ -1,0 +1,368 @@
+---
+title: "Building REST APIs"
+sidebarTitle: "Part 7: REST APIs"
+description: "REST principles, DTOs and validation, error handling, and logging in ASP.NET Core."
+icon: "plug"
+---
+
+This part covers REST conventions and the supporting pieces of a real API: DTOs, validation, error handling, and logging.
+
+---
+
+## Module 19: REST Principles
+
+### HTTP Verbs
+
+**Definition:** HTTP verbs are the methods that describe the action a request performs on a resource.
+
+**Explanation:**
+- **GET:** read data (no changes).
+- **POST:** create a new resource.
+- **PUT:** replace/update an existing resource.
+- **PATCH:** partially update a resource.
+- **DELETE:** remove a resource.
+
+**Basic example:**
+```csharp
+[HttpGet]    public IActionResult GetAll() => Ok();
+[HttpPost]   public IActionResult Create(Product p) => Created("", p);
+[HttpPut("{id}")]    public IActionResult Update(int id, Product p) => NoContent();
+[HttpDelete("{id}")] public IActionResult Delete(int id) => NoContent();
+```
+
+**Real-world example:** A blog API uses GET to read posts, POST to publish, PUT to edit, and DELETE to remove them.
+
+**Advanced notes:**
+- GET, PUT, and DELETE are **idempotent** (repeating gives the same result); POST is not.
+- GET must never change server state — keep it side-effect free.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/
+- https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+
+---
+
+### Status Codes
+
+**Definition:** HTTP status codes are numeric results telling the client what happened with a request.
+
+**Explanation:**
+- **2xx success:** 200 OK, 201 Created, 204 No Content.
+- **4xx client error:** 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found.
+- **5xx server error:** 500 Internal Server Error.
+
+**Basic example:**
+```csharp
+if (product == null) return NotFound();   // 404
+return Ok(product);                        // 200
+```
+
+**Real-world example:** Returning 404 when a requested product ID does not exist, so the client can show "not found".
+
+**Advanced notes:**
+- Use 201 with a `Location` header when creating (`CreatedAtAction`).
+- 422 Unprocessable Entity is sometimes used for validation errors; 400 is also common.
+
+**Reference links:**
+- https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/action-return-types
+
+---
+
+### REST Best Practices
+
+**Definition:** REST best practices are conventions for designing clear, consistent, and predictable APIs.
+
+**Explanation:**
+- Use nouns for resources, not verbs: `/products`, not `/getProducts`.
+- Use plural resource names and proper HTTP verbs.
+- Return appropriate status codes and consistent JSON shapes.
+- Version your API (e.g., `/api/v1/...`).
+
+**Basic example:**
+```
+GET    /api/v1/products        → list
+GET    /api/v1/products/5      → one
+POST   /api/v1/products        → create
+DELETE /api/v1/products/5      → delete
+```
+
+**Real-world example:** A public API documents consistent endpoints so third-party developers can integrate easily.
+
+**Advanced notes:**
+- Support paging, filtering, and sorting via query parameters for large collections.
+- Keep responses stateless; pass auth tokens with each request.
+- Document with OpenAPI/Swagger for discoverability.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/architecture/best-practices/api-design
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/
+
+---
+
+## Module 20: DTOs and Validation
+
+### DTO Pattern
+
+**Definition:** A DTO (Data Transfer Object) is a simple object used to send/receive data, separate from your entities.
+
+**Explanation:**
+- Entities map to the database; DTOs shape what the API exposes.
+- DTOs prevent leaking internal fields and avoid over-posting attacks.
+- You map between entities and DTOs.
+
+**Basic example:**
+```csharp
+public class ProductDto
+{
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+// Entity may also have CreatedBy, IsDeleted, etc. — not exposed.
+```
+
+**Real-world example:** A `UserDto` returns name and email but hides the password hash and internal flags.
+
+**Advanced notes:**
+- Use separate DTOs for input (create/update) and output (read) when they differ.
+- DTOs decouple your API contract from database changes.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/tutorials/first-web-api#prevent-over-posting
+- https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/
+
+---
+
+### AutoMapper
+
+**Definition:** AutoMapper is a library that automatically maps values between objects, such as entity ↔ DTO.
+
+**Explanation:**
+- You define mapping profiles once.
+- It copies matching properties automatically.
+- Reduces repetitive manual mapping code.
+
+**Basic example:**
+```csharp
+public class MappingProfile : Profile
+{
+    public MappingProfile() => CreateMap<Product, ProductDto>();
+}
+
+// usage:
+ProductDto dto = mapper.Map<ProductDto>(product);
+```
+
+**Real-world example:** Converting a list of `Order` entities into `OrderDto`s for an API response without writing copy code for every field.
+
+**Advanced notes:**
+- Register with `AddAutoMapper(...)`; inject `IMapper`.
+- For simple/small projects, manual mapping is often clearer and avoids hidden behavior.
+- Use `ProjectTo<>` with EF Core to map directly in the SQL query.
+
+**Reference links:**
+- https://docs.automapper.org/
+- https://docs.automapper.org/en/stable/Getting-started.html
+
+---
+
+### FluentValidation / Data Annotations
+
+**Definition:** These are two ways to validate incoming data — attributes (Data Annotations) or fluent rules (FluentValidation).
+
+**Explanation:**
+- **Data Annotations:** attributes on properties like `[Required]`, `[Range]`, `[EmailAddress]`.
+- **FluentValidation:** a separate class with expressive rules, better for complex logic.
+- With `[ApiController]`, invalid models auto-return 400.
+
+**Basic example:**
+```csharp
+// Data Annotations
+public class ProductDto
+{
+    [Required] public string Name { get; set; }
+    [Range(1, 10000)] public decimal Price { get; set; }
+}
+
+// FluentValidation
+public class ProductValidator : AbstractValidator<ProductDto>
+{
+    public ProductValidator()
+    {
+        RuleFor(x => x.Name).NotEmpty();
+        RuleFor(x => x.Price).GreaterThan(0);
+    }
+}
+```
+
+**Real-world example:** Rejecting a signup where the email is malformed or the password is too short, returning clear error messages.
+
+**Advanced notes:**
+- FluentValidation handles cross-field rules, conditional rules, and async checks (e.g., "email already exists").
+- Keep validation in DTOs/validators, not scattered across controllers.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/models/validation
+- https://docs.fluentvalidation.net/
+
+---
+
+## Module 21: Error Handling
+
+### Global Exception Middleware
+
+**Definition:** Global exception middleware catches unhandled errors anywhere in the app and returns a consistent response.
+
+**Explanation:**
+- Add it early in the pipeline so it wraps all later middleware and controllers.
+- It catches exceptions, logs them, and returns a clean error.
+- Prevents leaking stack traces to clients.
+
+**Basic example:**
+```csharp
+app.UseExceptionHandler(handler =>
+{
+    handler.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsJsonAsync(new { error = "Something went wrong" });
+    });
+});
+```
+
+**Real-world example:** A database outage throws deep in a service; the middleware catches it and returns a friendly 500 instead of crashing the request.
+
+**Advanced notes:**
+- Map specific exception types to specific status codes (e.g., `NotFoundException` → 404).
+- `IExceptionHandler` (modern .NET) is a clean, testable alternative to inline middleware.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/error-handling
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/handle-errors
+
+---
+
+### Problem Details Response
+
+**Definition:** Problem Details is a standard JSON format (RFC 9457) for returning API error information.
+
+**Explanation:**
+- Returns a structured object with `type`, `title`, `status`, and `detail`.
+- ASP.NET Core supports it built in.
+- Gives clients a predictable, machine-readable error shape.
+
+**Basic example:**
+```csharp
+builder.Services.AddProblemDetails();
+
+// produces:
+// { "title": "Not Found", "status": 404, "detail": "Product 5 not found" }
+return Problem(detail: "Product 5 not found", statusCode: 404);
+```
+
+**Real-world example:** A frontend reads the standardized error body to display the correct message regardless of which endpoint failed.
+
+**Advanced notes:**
+- `ValidationProblemDetails` extends it to include per-field validation errors.
+- Standardizing errors makes client integration and debugging much easier.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/handle-errors#problem-details
+- https://datatracker.ietf.org/doc/html/rfc9457
+
+---
+
+## Module 22: Logging
+
+### ILogger
+
+**Definition:** `ILogger` is the built-in logging interface used to record messages and errors.
+
+**Explanation:**
+- Inject `ILogger<T>` into any class.
+- Log at different levels: Information, Warning, Error, Debug, Critical.
+- Output goes to configured providers (console, files, etc.).
+
+**Basic example:**
+```csharp
+public class OrderService(ILogger<OrderService> logger)
+{
+    public void Place()
+    {
+        logger.LogInformation("Order placed");
+        logger.LogError("Payment failed");
+    }
+}
+```
+
+**Real-world example:** Logging every failed login attempt as a warning to help spot suspicious activity.
+
+**Advanced notes:**
+- Set minimum log levels per category in `appsettings.json`.
+- Avoid logging sensitive data (passwords, tokens, personal info).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/logging/
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/logging
+
+---
+
+### Structured Logging
+
+**Definition:** Structured logging records logs with named data fields, not just plain text.
+
+**Explanation:**
+- Use placeholders in the message and pass values as arguments.
+- Logs become searchable/filterable by field (e.g., find all logs for `OrderId = 5`).
+- Better than string concatenation for analysis.
+
+**Basic example:**
+```csharp
+logger.LogInformation("Order {OrderId} placed by {UserId}", orderId, userId);
+// Captures OrderId and UserId as queryable fields.
+```
+
+**Real-world example:** Searching logs by `CustomerId` across thousands of entries to trace one customer's journey.
+
+**Advanced notes:**
+- Do not use string interpolation in log messages — it loses the structure: prefer placeholders.
+- Structured logs shine when shipped to tools like Seq, Elasticsearch, or Application Insights.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/logging/#log-message-template
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/logging
+
+---
+
+### Serilog
+
+**Definition:** Serilog is a popular third-party logging library with strong structured-logging support and many output "sinks".
+
+**Explanation:**
+- Plugs into ASP.NET Core's logging system.
+- Writes to many destinations (console, files, databases, Seq) via sinks.
+- Configurable through code or `appsettings.json`.
+
+**Basic example:**
+```csharp
+builder.Host.UseSerilog((ctx, config) =>
+    config.WriteTo.Console().WriteTo.File("logs/log.txt"));
+```
+
+**Real-world example:** A production API writes JSON logs to files and ships them to a central log server for monitoring and alerts.
+
+**Advanced notes:**
+- Use rolling files (daily) to manage log size.
+- Enrich logs with context (machine name, request ID, user) for easier debugging.
+
+**Reference links:**
+- https://serilog.net/
+- https://github.com/serilog/serilog-aspnetcore
+
+---
+
+## What to build next
+
+Extend your Products API: add input/output DTOs, validate input with Data Annotations or FluentValidation, add global exception middleware returning Problem Details, and log create/update/delete actions with structured `ILogger` messages.
+
+Next: **[Part 8 — Security](/feature/techstack/donNetCore/part-08-security)**.

@@ -1,0 +1,153 @@
+---
+title: "Architecture and Design Patterns"
+sidebarTitle: "Part 10: Architecture"
+description: "Repository, Unit of Work, CQRS, and Clean Architecture patterns."
+icon: "sitemap"
+---
+
+These patterns organize larger applications so they stay maintainable, testable, and easy to change.
+
+---
+
+## Module 27: Repository Pattern
+
+**Definition:** The Repository pattern wraps data access behind an interface, hiding database details from the rest of the app.
+
+**Explanation:**
+- A repository exposes methods like `GetById`, `Add`, `Remove` for one entity type.
+- Business code depends on the repository interface, not on EF Core directly.
+- This makes data access swappable and easy to mock in tests.
+
+**Basic example:**
+```csharp
+public interface IProductRepository
+{
+    Task<Product?> GetByIdAsync(int id);
+    Task AddAsync(Product product);
+}
+
+public class ProductRepository(AppDbContext db) : IProductRepository
+{
+    public Task<Product?> GetByIdAsync(int id) => db.Products.FindAsync(id).AsTask();
+    public async Task AddAsync(Product p) { db.Products.Add(p); await db.SaveChangesAsync(); }
+}
+```
+
+**Real-world example:** A service calls `_repo.GetByIdAsync(5)` without knowing whether data comes from SQL Server, an API, or a test fake.
+
+**Advanced notes:**
+- EF Core's `DbContext` + `DbSet` is already a repository/unit-of-work; adding another layer can be redundant for simple apps.
+- A **generic repository** `IRepository<T>` reduces boilerplate but can leak too much or too little; use judiciously.
+- Repositories shine when you need to abstract multiple data sources or enforce a clean domain boundary.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design
+- https://learn.microsoft.com/en-us/aspnet/mvc/overview/older-versions/getting-started-with-ef-5-using-mvc-4/implementing-the-repository-and-unit-of-work-patterns-in-an-asp-net-mvc-application
+
+---
+
+## Module 28: Unit of Work Pattern
+
+**Definition:** The Unit of Work pattern groups multiple data changes into a single transaction that commits together.
+
+**Explanation:**
+- It coordinates several repositories so their changes save as one operation.
+- Either all changes succeed, or none are applied.
+- Ensures data consistency across related updates.
+
+**Basic example:**
+```csharp
+public interface IUnitOfWork
+{
+    IProductRepository Products { get; }
+    IOrderRepository Orders { get; }
+    Task<int> SaveChangesAsync();
+}
+
+// usage:
+uow.Orders.Add(order);
+uow.Products.Reduce(stock);
+await uow.SaveChangesAsync(); // commit both together
+```
+
+**Real-world example:** Placing an order both creates an order record and reduces product stock — both must succeed or the whole thing rolls back.
+
+**Advanced notes:**
+- EF Core's `DbContext` already implements Unit of Work — `SaveChanges` commits all tracked changes in one transaction.
+- An explicit `IUnitOfWork` is mainly useful when wrapping multiple custom repositories behind one save call.
+- For multi-step transactions across operations, use `db.Database.BeginTransactionAsync()`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/infrastructure-persistence-layer-design
+- https://learn.microsoft.com/en-us/ef/core/saving/transactions
+
+---
+
+## Module 29: CQRS
+
+**Definition:** CQRS (Command Query Responsibility Segregation) separates write operations (commands) from read operations (queries).
+
+**Explanation:**
+- **Commands** change data and return little or nothing.
+- **Queries** read data and never change it.
+- Each side can be modeled and optimized independently.
+
+**Basic example:**
+```csharp
+// Command
+public record CreateProductCommand(string Name, decimal Price);
+
+// Query
+public record GetProductQuery(int Id);
+
+// Handlers process each separately (often with MediatR)
+```
+
+**Real-world example:** A reporting query reads from a denormalized, read-optimized view, while commands write to a normalized transactional model.
+
+**Advanced notes:**
+- Often implemented with the **MediatR** library to dispatch commands/queries to handlers.
+- CQRS adds complexity; use it for large or complex domains, not simple CRUD apps.
+- Advanced CQRS can pair with **event sourcing** and separate read/write databases.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs
+- https://learn.microsoft.com/en-us/dotnet/architecture/microservices/microservice-ddd-cqrs-patterns/apply-simplified-microservice-cqrs-ddd-patterns
+
+---
+
+## Module 30: Clean Architecture
+
+**Definition:** Clean Architecture organizes code into concentric layers where dependencies point inward, toward the core business logic.
+
+**Explanation:**
+- Layers: **Domain** (entities, rules) → **Application** (use cases) → **Infrastructure** (database, external services) → **API/UI**.
+- Inner layers know nothing about outer ones.
+- The database and frameworks are details, plugged in at the edges.
+
+**Basic example:**
+```
+Domain        ← entities, interfaces (no dependencies)
+Application   ← use cases, depends on Domain
+Infrastructure ← EF Core, email, depends on Application interfaces
+API           ← controllers, wires everything via DI
+```
+
+**Real-world example:** You can swap SQL Server for PostgreSQL, or the web API for a console app, without touching the core business rules.
+
+**Advanced notes:**
+- Built on the Dependency Inversion Principle: the core defines interfaces, outer layers implement them.
+- Improves testability (core logic has no framework dependencies) and long-term maintainability.
+- Can be over-engineering for small apps; match the architecture to the project's size and lifespan.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures#clean-architecture
+- https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/
+
+---
+
+## What to build next
+
+Refactor your Products API into layers: a Domain project (entities + `IProductRepository`), an Application layer (a `ProductService` use case), and Infrastructure (EF Core repository). Keep controllers thin. This puts Repository, Unit of Work (via `DbContext`), and Clean Architecture into practice together.
+
+Next: **[Part 11 — Real-World Development](/feature/techstack/donNetCore/part-11-real-world)**.

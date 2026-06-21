@@ -1,0 +1,30 @@
+---
+title: Git integration & deployment
+sidebarTitle: Git & deployment
+description: Connect a repository, use PR previews as the review surface, and deploy on merge.
+icon: rocket
+---
+
+<Steps>
+  <Step title="Connect the repo">
+    Install Mintlify's GitHub (or GitLab) app and point it at the folder containing
+    `docs.json`.
+  </Step>
+  <Step title="Use PR previews as the review surface">
+    Every PR builds a preview deployment. Review the rendered docs, not just the diff.
+  </Step>
+  <Step title="Merge to deploy">
+    Merging to the default branch triggers the production build and CDN deploy.
+    Continuous deployment is the default — there's no separate "publish" button.
+  </Step>
+</Steps>
+
+<Warning>
+  Treat `docs.json` like production code. A malformed config or a broken MDX page
+  **fails the build and blocks the deploy**. Run `mint dev` and `mint broken-links`
+  locally before you open the PR.
+</Warning>
+
+<Card title="Next: enterprise architecture" icon="arrow-right" href="/feature/mintlify/enterprise">
+  SSO, monorepos, and multi-product portals.
+</Card>

@@ -1,0 +1,364 @@
+---
+title: "Advanced Topics"
+sidebarTitle: "Part 12: Advanced Topics"
+description: "Microservices, message queues, Docker, and cloud deployment."
+icon: "rocket"
+---
+
+These topics take you from a single application to distributed, containerized, cloud-deployed systems. They are advanced — learn them after you're comfortable building a solid single API.
+
+---
+
+## Module 36: Microservices
+
+Microservices split a large application into small, independent services that each own one job.
+
+### Service Communication
+
+**Definition:** Service communication is how separate microservices talk to each other, either synchronously (request/response) or asynchronously (messages).
+
+**Explanation:**
+- **Synchronous:** one service calls another and waits (HTTP/REST, gRPC).
+- **Asynchronous:** services exchange messages through a queue and don't wait.
+- Synchronous is simpler; asynchronous is more resilient and decoupled.
+
+**Basic example:**
+```csharp
+// Synchronous HTTP call from Orders service to Inventory service
+public class InventoryClient(HttpClient http)
+{
+    public async Task<bool> IsInStockAsync(int productId)
+    {
+        var result = await http.GetFromJsonAsync<StockDto>($"/stock/{productId}");
+        return result?.Available > 0;
+    }
+}
+
+// Registered with a typed HttpClient
+builder.Services.AddHttpClient<InventoryClient>(c =>
+    c.BaseAddress = new Uri("https://inventory-service"));
+```
+
+**Real-world example:** An Orders service calls an Inventory service over HTTP to check stock before confirming an order.
+
+**Advanced notes:**
+- Prefer **gRPC** for fast internal service-to-service calls; REST for public/external APIs.
+- Synchronous chains create coupling — if one service is down, callers fail. Add timeouts, retries, and circuit breakers (e.g. with Polly).
+- For workflows that can tolerate delay, prefer asynchronous messaging to avoid tight coupling.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/architecture/microservices/architect-microservice-container-applications/communication-in-microservice-architecture
+- https://learn.microsoft.com/en-us/aspnet/core/grpc/
+
+### API Gateway
+
+**Definition:** An API gateway is a single entry point that routes incoming requests to the right backend microservice.
+
+**Explanation:**
+- Clients talk to the gateway, not to each service directly.
+- It handles routing, authentication, rate limiting, and aggregation.
+- Hides the internal service layout from clients.
+
+**Basic example:**
+```csharp
+// Using YARP (Microsoft's reverse proxy) in Program.cs
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+var app = builder.Build();
+app.MapReverseProxy();
+app.Run();
+// Routes (which path goes to which service) are defined in appsettings.json.
+```
+
+**Real-world example:** A mobile app calls one gateway URL; the gateway forwards `/orders` to the Orders service and `/products` to the Catalog service.
+
+**Advanced notes:**
+- Common gateways: **YARP** (in .NET), plus Ocelot, NGINX, Azure API Management.
+- Put cross-cutting concerns (auth, throttling, logging) at the gateway so each service doesn't repeat them.
+- Avoid putting business logic in the gateway; keep it a router.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/yarp/
+- https://learn.microsoft.com/en-us/dotnet/architecture/microservices/architect-microservice-container-applications/direct-client-to-microservice-communication-versus-the-api-gateway-pattern
+
+### Event-Driven Architecture
+
+**Definition:** Event-driven architecture is a style where services publish events when something happens, and other services react to them.
+
+**Explanation:**
+- A service announces an event ("OrderPlaced") instead of calling others directly.
+- Interested services subscribe and react on their own.
+- Producers and consumers don't know about each other — they're decoupled.
+
+**Basic example:**
+```csharp
+// Orders service publishes an event (conceptual)
+await publisher.PublishAsync(new OrderPlaced(orderId: 42, total: 99.50m));
+
+// Inventory and Email services each subscribe and react independently:
+//   Inventory  -> reduce stock
+//   Email      -> send confirmation
+```
+
+**Real-world example:** When an order is placed, one event triggers stock reduction, a confirmation email, and an analytics update — each handled by a different service.
+
+**Advanced notes:**
+- Events flow through a message broker (RabbitMQ, Azure Service Bus, Kafka).
+- Consumers must be **idempotent** (safe to process the same event twice), since brokers may deliver duplicates.
+- Patterns like **Saga** coordinate multi-step workflows across services without a central transaction.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/architecture/guide/architecture-styles/event-driven
+- https://learn.microsoft.com/en-us/dotnet/architecture/microservices/multi-container-microservice-net-applications/integration-event-based-microservice-communications
+
+---
+
+## Module 37: Message Queues
+
+Message queues let services exchange messages reliably and asynchronously, smoothing out load and decoupling senders from receivers.
+
+### RabbitMQ
+
+**Definition:** RabbitMQ is a popular open-source message broker that routes messages between producers and consumers.
+
+**Explanation:**
+- A producer sends messages to an exchange; the exchange routes them to queues.
+- Consumers read from queues, one message at a time.
+- Messages wait safely in the queue until a consumer is ready.
+
+**Basic example:**
+```csharp
+// Producer (using RabbitMQ.Client) — conceptual
+var factory = new ConnectionFactory { HostName = "localhost" };
+using var connection = await factory.CreateConnectionAsync();
+using var channel = await connection.CreateChannelAsync();
+
+await channel.QueueDeclareAsync("orders", durable: true, exclusive: false, autoDelete: false);
+
+var body = Encoding.UTF8.GetBytes("Order #42");
+await channel.BasicPublishAsync(exchange: "", routingKey: "orders", body: body);
+```
+
+**Real-world example:** An Orders service drops "process this order" messages into a RabbitMQ queue; a worker service consumes them at its own pace, even during traffic spikes.
+
+**Advanced notes:**
+- Make queues and messages **durable** and acknowledge messages only after successful processing, so nothing is lost on crash.
+- Use a **dead-letter queue** for messages that repeatedly fail.
+- Libraries like **MassTransit** add retries, sagas, and a cleaner API on top of RabbitMQ.
+
+**Reference links:**
+- https://www.rabbitmq.com/tutorials
+- https://masstransit.io/documentation/concepts
+
+### Azure Service Bus
+
+**Definition:** Azure Service Bus is a fully managed message broker on Azure, supporting queues and publish/subscribe topics.
+
+**Explanation:**
+- Like RabbitMQ but managed by Azure (no servers to run).
+- **Queues** for point-to-point; **topics + subscriptions** for one-to-many.
+- Built-in features for ordering, duplicate detection, and dead-lettering.
+
+**Basic example:**
+```csharp
+// Sending a message (Azure.Messaging.ServiceBus) — conceptual
+await using var client = new ServiceBusClient(connectionString);
+ServiceBusSender sender = client.CreateSender("orders");
+
+await sender.SendMessageAsync(new ServiceBusMessage("Order #42"));
+```
+
+**Real-world example:** A cloud-hosted system uses a Service Bus topic so that "OrderPlaced" fans out to billing, shipping, and notification subscribers automatically.
+
+**Advanced notes:**
+- Choose **Service Bus** for enterprise messaging on Azure; **Event Hubs/Kafka** for high-throughput event streaming.
+- Use sessions for ordered processing and duplicate detection to avoid double-handling.
+- Tune max delivery count and dead-letter handling for poison messages.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-messaging-overview
+- https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-dotnet-get-started-with-queues
+
+---
+
+## Module 38: Docker
+
+Docker packages your app and everything it needs into a container that runs the same everywhere.
+
+### Docker Basics
+
+**Definition:** Docker is a platform that runs applications in containers — lightweight, isolated environments built from images.
+
+**Explanation:**
+- An **image** is a blueprint; a **container** is a running instance of it.
+- Containers include your app plus its dependencies, so "works on my machine" problems disappear.
+- A **Dockerfile** describes how to build the image.
+
+**Basic example:**
+```bash
+# Common commands
+docker build -t myapi .        # build an image from the Dockerfile
+docker run -p 8080:8080 myapi  # run a container, mapping ports
+docker ps                      # list running containers
+docker stop <id>               # stop a container
+```
+
+**Real-world example:** You hand a teammate one image, and it runs identically on their laptop, the test server, and production.
+
+**Advanced notes:**
+- Images are built in layers and cached; ordering Dockerfile steps well speeds up rebuilds.
+- Use **Docker Compose** to run multiple containers together (API + database + Redis) with one command.
+- Keep images small and run containers as a non-root user for security.
+
+**Reference links:**
+- https://docs.docker.com/get-started/
+- https://docs.docker.com/compose/
+
+### Containerizing .NET Applications
+
+**Definition:** Containerizing a .NET app means building a Docker image that runs your app with the correct runtime.
+
+**Explanation:**
+- Use a **multi-stage** Dockerfile: one stage builds, a smaller stage runs.
+- The build stage uses the SDK image; the final stage uses the lighter runtime image.
+- This keeps the final image small and free of build tools.
+
+**Basic example:**
+```dockerfile
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet publish -c Release -o /app
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "MyApi.dll"]
+```
+
+**Real-world example:** Containerize your ASP.NET Core API so it deploys the same way to any cloud that runs containers (Azure Container Apps, Kubernetes, AWS).
+
+**Advanced notes:**
+- The .NET SDK can build images without a Dockerfile via `dotnet publish /t:PublishContainer`.
+- Use **chiseled** or Alpine-based runtime images for smaller, more secure containers.
+- Pass configuration through environment variables so one image works across all environments.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/core/docker/build-container
+- https://learn.microsoft.com/en-us/dotnet/core/docker/publish-as-container
+
+---
+
+## Module 39: Cloud Deployment
+
+Cloud deployment puts your app on managed infrastructure so it's available, scalable, and maintained without your own servers.
+
+### Azure App Service
+
+**Definition:** Azure App Service is a managed platform for hosting web apps and APIs without managing servers.
+
+**Explanation:**
+- You deploy your code or container; Azure runs and scales it.
+- Handles patching, load balancing, and HTTPS for you.
+- Supports easy scaling up (bigger machine) and out (more instances).
+
+**Basic example:**
+```bash
+# Deploy from the .NET CLI / Azure CLI (conceptual)
+az webapp up --name my-shop-api --runtime "DOTNET:10" --sku B1
+# Set configuration (becomes environment variables)
+az webapp config appsettings set --name my-shop-api \
+  --settings ConnectionStrings__Default="<prod-connection>"
+```
+
+**Real-world example:** Host your ASP.NET Core API on App Service so it auto-scales during busy periods and Azure handles certificates and OS updates.
+
+**Advanced notes:**
+- Use **deployment slots** (e.g. a staging slot) to deploy, test, then swap into production with zero downtime.
+- App settings in the portal override `appsettings.json` and are the right place for secrets (or reference Azure Key Vault).
+- Enable Application Insights for monitoring, logs, and performance metrics.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/app-service/quickstart-dotnetcore
+- https://learn.microsoft.com/en-us/azure/app-service/deploy-staging-slots
+
+### Azure SQL
+
+**Definition:** Azure SQL Database is a fully managed relational database service based on SQL Server.
+
+**Explanation:**
+- A cloud database without managing the server.
+- Azure handles backups, patching, and high availability.
+- Your EF Core app connects with a normal connection string.
+
+**Basic example:**
+```csharp
+// Same EF Core code — only the connection string changes
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+```
+```text
+Connection string points to: <server>.database.windows.net
+```
+
+**Real-world example:** Move your local SQL Server database to Azure SQL so it's backed up automatically and reachable by your App Service.
+
+**Advanced notes:**
+- Configure the **firewall** to allow only your app and trusted IPs.
+- Prefer **Managed Identity** over passwords so the app authenticates to the database without stored credentials.
+- Pick the right tier (DTU vs vCore, serverless for variable load) to balance cost and performance.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/azure-sql/database/single-database-create-quickstart
+- https://learn.microsoft.com/en-us/azure/azure-sql/database/azure-sql-dotnet-entity-framework-core-quickstart
+
+### CI/CD Pipelines
+
+**Definition:** CI/CD (Continuous Integration / Continuous Deployment) automatically builds, tests, and deploys your code whenever you push changes.
+
+**Explanation:**
+- **CI:** every push builds the app and runs tests.
+- **CD:** passing builds deploy automatically to your environment.
+- Removes manual, error-prone deployment steps.
+
+**Basic example:**
+```yaml
+# GitHub Actions: .github/workflows/deploy.yml (simplified)
+name: build-and-deploy
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test
+      - run: dotnet publish -c Release -o ./publish
+      # then a deploy step pushes ./publish to Azure App Service
+```
+
+**Real-world example:** You merge a pull request to `main`; the pipeline runs your xUnit tests and, if they pass, deploys the new version to Azure automatically.
+
+**Advanced notes:**
+- Common tools: **GitHub Actions** and **Azure Pipelines**.
+- Use environment-specific secrets stored in the CI system, never in the repo.
+- Add gates (manual approval, required passing tests) before deploying to production, and keep a rollback path.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/azure/app-service/deploy-github-actions
+- https://docs.github.com/en/actions/use-cases-and-examples/deploying/deploying-net-to-azure-app-service
+
+---
+
+## What to build next
+
+Containerize the API you built in earlier parts with a multi-stage Dockerfile, then run it together with SQL Server and Redis using Docker Compose. Add a GitHub Actions workflow that runs your tests on every push. As a stretch goal, split one feature (e.g. notifications) into a separate service that reacts to a message on RabbitMQ — this gives you a first taste of microservices and event-driven design end to end.
+
+Next: **[Part 13 — Capstone Projects & .NET Reference](/feature/techstack/donNetCore/part-13-projects-and-comparison)**.

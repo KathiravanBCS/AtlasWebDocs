@@ -1,0 +1,44 @@
+---
+title: What Mintlify actually is
+sidebarTitle: What Mintlify is
+description: The docs-as-code model behind Mintlify, and the situations where it's the right tool.
+icon: circle-info
+---
+
+Mintlify is a **hosted documentation platform built on a docs-as-code workflow**.
+Your content lives as MDX files in a Git repository; a single `docs.json` describes
+structure, theme, and behavior; and Mintlify builds and serves a fast, searchable,
+AI-ready site from it.
+
+The mental model that matters:
+
+<Steps>
+  <Step title="Source of truth is Git">
+    Pages are plain `.mdx` files. Reviews happen in pull requests. History is your
+    Git history. There is no separate CMS database to keep in sync.
+  </Step>
+  <Step title="One config file drives the product">
+    `docs.json` is the contract between your repo and Mintlify's build engine —
+    navigation, branding, API config, integrations, and AI behavior all live there.
+  </Step>
+  <Step title="The build engine does the heavy lifting">
+    On push (or via the dashboard), Mintlify compiles MDX, indexes content for
+    search, generates AI artifacts (`llms.txt`), and deploys to its CDN.
+  </Step>
+  <Step title="Output serves both humans and machines">
+    The same content powers the rendered site, semantic search, the in-page AI
+    assistant, and external AI agents via MCP and `llms.txt`.
+  </Step>
+</Steps>
+
+## Where it fits
+
+<Tip>
+  Mintlify is strongest when documentation and **API reference** live together and
+  you want an interactive playground without building one. If you only need a blog
+  or a marketing site, it's the wrong tool.
+</Tip>
+
+<Card title="Next: the request lifecycle" icon="arrow-right" href="/feature/mintlify/request-lifecycle">
+  See exactly what happens between a `git push` and a live page.
+</Card>

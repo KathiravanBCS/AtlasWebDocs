@@ -1,0 +1,625 @@
+---
+title: "C# Fundamentals"
+sidebarTitle: "Part 1: C# Fundamentals"
+description: "What .NET is, how to set it up, and core C#: variables, control flow, and methods."
+icon: "code"
+---
+
+This part covers what .NET is, how to set it up, and the core C# language: variables, control flow, and methods.
+
+---
+
+## Module 1: Introduction to .NET
+
+### What is .NET?
+
+**Definition:** .NET is a free, cross-platform developer platform from Microsoft for building many kinds of applications using languages like C#.
+
+**Explanation:**
+- It includes a runtime that runs your code and a large set of built-in libraries (the BCL — Base Class Library).
+- With .NET you can build web APIs, websites, desktop apps, mobile apps, cloud services, and more.
+- C# is the main language used with .NET; F# and Visual Basic are also supported.
+
+**Basic example:**
+A one-line .NET program:
+```csharp
+Console.WriteLine("Hello, .NET!");
+```
+
+**Real-world example:** A company builds a web API for its mobile app using .NET because the same code runs on Windows servers and Linux containers.
+
+**Advanced notes:**
+- .NET code is compiled to an intermediate language (IL), then compiled to machine code at runtime by the JIT compiler.
+- .NET supports AOT (Ahead-Of-Time) compilation for faster startup and smaller deployments.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/core/introduction
+- https://learn.microsoft.com/en-us/dotnet/standard/
+
+---
+
+### .NET Framework vs .NET Core vs .NET
+
+**Definition:** These are three stages of the platform: the old Windows-only .NET Framework, the rewritten cross-platform .NET Core, and the unified modern .NET.
+
+**Explanation:**
+- **.NET Framework (1.0–4.8):** Windows-only, legacy, still maintained but not getting new features.
+- **.NET Core (1.0–3.1):** Cross-platform rewrite, open source, faster. This name is now retired.
+- **.NET (5, 6, 7, 8, 9, 10...):** The unified continuation of .NET Core. "Core" was dropped after .NET 5. This is what you use today.
+
+**Basic example:**
+- Old project file (.NET Framework) uses verbose XML.
+- Modern .NET project file is short:
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+</Project>
+```
+
+**Real-world example:** A bank keeps an old internal tool on .NET Framework but writes all new microservices on modern .NET 10.
+
+**Advanced notes:**
+- LTS (Long-Term Support) versions (e.g., .NET 8, .NET 10) get 3 years of support; STS versions get 18 months.
+- For anything new in 2026, use modern .NET. Only use .NET Framework to maintain legacy apps.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/core/introduction
+- https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-and-net-core
+
+---
+
+### SDK and Runtime
+
+**Definition:** The SDK is the toolkit for building apps; the Runtime is what is needed only to run already-built apps.
+
+**Explanation:**
+- **SDK (Software Development Kit):** includes the compiler, CLI tools (`dotnet`), and the runtime. Developers install this.
+- **Runtime:** includes only what is needed to execute a .NET app. Servers that just run apps need this.
+- If you have the SDK, you already have the runtime.
+
+**Basic example:**
+Check what is installed:
+```bash
+dotnet --version       # SDK version
+dotnet --list-runtimes # installed runtimes
+dotnet --list-sdks     # installed SDKs
+```
+
+**Real-world example:** A build server has the SDK to compile code; a lightweight production container ships with only the ASP.NET Core runtime to stay small.
+
+**Advanced notes:**
+- There are different runtimes: the .NET Runtime (console apps), the ASP.NET Core Runtime (web apps), and the Desktop Runtime (Windows UI apps).
+- You can publish "self-contained" apps that bundle the runtime, so the target machine needs nothing pre-installed.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/core/sdk
+- https://learn.microsoft.com/en-us/dotnet/core/install/
+
+---
+
+### Installing Visual Studio / VS Code
+
+**Definition:** Visual Studio and VS Code are the two main editors for writing .NET applications.
+
+**Explanation:**
+- **Visual Studio (Windows/Mac):** a full IDE with designers, debugging, and built-in templates. Best for large projects.
+- **VS Code:** a lightweight, cross-platform editor. Add the **C# Dev Kit** extension for .NET support.
+- Both need the **.NET SDK** installed separately.
+
+**Basic example:**
+Verify the SDK works after install:
+```bash
+dotnet --version
+```
+
+**Real-world example:** A developer on Linux uses VS Code + C# Dev Kit, while a teammate on Windows uses Visual Studio — both work on the same project.
+
+**Advanced notes:**
+- VS Code uses the C# Dev Kit and the Roslyn language server for IntelliSense.
+- For CI/CD and servers you usually install only the SDK via command line, no editor needed.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/core/install/
+- https://code.visualstudio.com/docs/languages/dotnet
+
+---
+
+### Creating your first application
+
+**Definition:** Creating a new .NET app means generating a starter project with the `dotnet new` command or your IDE.
+
+**Explanation:**
+- Use the CLI to scaffold projects from templates (console, web API, MVC, etc.).
+- `dotnet run` builds and runs the project.
+- Modern console apps use "top-level statements" — no `Main` method boilerplate needed.
+
+**Basic example:**
+Step by step:
+```bash
+dotnet new console -o HelloApp   # 1. create a console project
+cd HelloApp                      # 2. enter the folder
+dotnet run                       # 3. build and run
+```
+Edit `Program.cs`:
+```csharp
+Console.WriteLine("Hello, world!");
+```
+
+**Real-world example:** A developer scaffolds a new web API in seconds with `dotnet new webapi` instead of setting up files manually.
+
+**Advanced notes:**
+- `dotnet new list` shows all available templates.
+- Behind top-level statements the compiler still generates a hidden `Main` method as the entry point.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/core/tutorials/with-visual-studio-code
+- https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-new
+
+---
+
+## Module 2: C# Basics
+
+### Variables and Data Types
+
+**Definition:** A variable is a named storage location that holds a value of a specific type.
+
+**Explanation:**
+- C# is **statically typed** — every variable has a type known at compile time.
+- Common value types: `int`, `double`, `decimal`, `bool`, `char`.
+- Common reference types: `string`, `object`, arrays, classes.
+- `var` lets the compiler infer the type from the assigned value.
+
+**Basic example:**
+```csharp
+int age = 25;
+double price = 19.99;
+bool isActive = true;
+string name = "Kathir";
+var country = "India"; // inferred as string
+```
+
+**Real-world example:** Storing a user's age, account balance, and name when they register on a website.
+
+**Advanced notes:**
+- `decimal` is for money (no rounding errors); `double` is for scientific/floating math.
+- Value types live on the stack and copy by value; reference types live on the heap and copy the reference.
+- `const` is fixed at compile time; `readonly` is set once at runtime.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/built-in-types
+- https://www.w3schools.com/cs/cs_variables.php
+
+---
+
+### Operators
+
+**Definition:** Operators are symbols that perform actions on values, such as math, comparison, or logic.
+
+**Explanation:**
+- **Arithmetic:** `+ - * / %`
+- **Comparison:** `== != > < >= <=`
+- **Logical:** `&&` (and), `||` (or), `!` (not)
+- **Assignment:** `=`, and shortcuts like `+=`, `-=`
+
+**Basic example:**
+```csharp
+int a = 10, b = 3;
+int sum = a + b;          // 13
+int remainder = a % b;    // 1
+bool result = a > b && b > 0; // true
+```
+
+**Real-world example:** Checking if a user is an adult and has agreed to terms: `age >= 18 && agreed`.
+
+**Advanced notes:**
+- The null-coalescing operator `??` returns a fallback when a value is null: `name ?? "Guest"`.
+- The ternary operator `condition ? x : y` is a one-line if/else.
+- `??=` assigns only if the variable is currently null.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/
+- https://www.w3schools.com/cs/cs_operators.php
+
+---
+
+### Type Conversion
+
+**Definition:** Type conversion changes a value from one data type to another.
+
+**Explanation:**
+- **Implicit:** automatic and safe when no data is lost (`int` → `double`).
+- **Explicit (cast):** manual when data could be lost (`double` → `int`).
+- **Parsing:** turning text into numbers with `int.Parse` or the safer `int.TryParse`.
+
+**Basic example:**
+```csharp
+int num = 10;
+double d = num;            // implicit
+int back = (int)d;         // explicit cast
+
+string text = "42";
+int parsed = int.Parse(text);          // throws if invalid
+bool ok = int.TryParse(text, out int safe); // safe, returns false on failure
+```
+
+**Real-world example:** Converting a quantity typed into a web form (always text) into a number before doing math.
+
+**Advanced notes:**
+- Prefer `TryParse` over `Parse` for user input to avoid exceptions.
+- `Convert.ToInt32(null)` returns 0, while `int.Parse(null)` throws — know the difference.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/types/casting-and-type-conversions
+- https://learn.microsoft.com/en-us/dotnet/api/system.int32.tryparse
+
+---
+
+### String Manipulation
+
+**Definition:** String manipulation means working with text: combining, searching, slicing, and formatting it.
+
+**Explanation:**
+- Strings are **immutable** — every change creates a new string.
+- Common operations: `Length`, `ToUpper()`, `Substring()`, `Replace()`, `Split()`, `Contains()`.
+- Use **string interpolation** (`$"..."`) to insert values into text.
+
+**Basic example:**
+```csharp
+string name = "Kathiravan";
+Console.WriteLine(name.Length);        // 10
+Console.WriteLine(name.ToUpper());     // KATHIRAVAN
+Console.WriteLine($"Hello, {name}!");  // Hello, Kathiravan!
+```
+
+**Real-world example:** Building a personalized greeting email: `$"Dear {firstName}, your order #{orderId} shipped."`.
+
+**Advanced notes:**
+- For building large strings in loops, use `StringBuilder` to avoid creating many throwaway strings.
+- Use `string.IsNullOrWhiteSpace()` to validate text input.
+- Verbatim strings `@"C:\path"` ignore escape characters.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/how-to/concatenate-multiple-strings
+- https://learn.microsoft.com/en-us/dotnet/api/system.string
+
+---
+
+### Nullable Types
+
+**Definition:** A nullable type is a value type that is allowed to also hold `null` (meaning "no value").
+
+**Explanation:**
+- Value types like `int` normally cannot be null. Adding `?` makes them nullable: `int?`.
+- Modern C# also has **nullable reference types** to warn you about possible null references.
+- Use `.HasValue` and `.Value`, or the `??` operator, to handle them safely.
+
+**Basic example:**
+```csharp
+int? score = null;        // allowed
+score = 90;
+
+if (score.HasValue)
+    Console.WriteLine(score.Value);
+
+int finalScore = score ?? 0; // use 0 if null
+```
+
+**Real-world example:** A "date of birth" field that the user has not filled in yet — represented as `DateTime?` (null until provided).
+
+**Advanced notes:**
+- Enable `<Nullable>enable</Nullable>` in the project to get compiler warnings for possible null usage.
+- The null-forgiving operator `value!` tells the compiler "trust me, this is not null."
+- Null-conditional `?.` safely accesses members: `user?.Address?.City`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/nullable-value-types
+- https://learn.microsoft.com/en-us/dotnet/csharp/nullable-references
+
+---
+
+## Module 3: Control Flow
+
+### if, else, switch
+
+**Definition:** These statements run different code depending on whether a condition is true.
+
+**Explanation:**
+- `if` runs a block when a condition is true; `else` handles the false case; `else if` chains more conditions.
+- `switch` chooses one branch from many based on a value — cleaner than long if/else chains.
+
+**Basic example:**
+```csharp
+int score = 75;
+
+if (score >= 90)
+    Console.WriteLine("A");
+else if (score >= 60)
+    Console.WriteLine("Pass");
+else
+    Console.WriteLine("Fail");
+
+switch (score / 10)
+{
+    case 10:
+    case 9: Console.WriteLine("Excellent"); break;
+    default: Console.WriteLine("Keep going"); break;
+}
+```
+
+**Real-world example:** Showing a discount tier based on how much a customer spent.
+
+**Advanced notes:**
+- **Switch expressions** are a modern, compact form: `var grade = score switch { >= 90 => "A", _ => "B" };`.
+- Pattern matching lets `switch` test types and conditions, not just exact values.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/selection-statements
+- https://www.w3schools.com/cs/cs_switch.php
+
+---
+
+### for, while, do-while
+
+**Definition:** Loops repeat a block of code multiple times.
+
+**Explanation:**
+- **`for`:** when you know how many times to repeat (counter-based).
+- **`while`:** repeats as long as a condition stays true (checked before each run).
+- **`do-while`:** like `while`, but runs at least once (condition checked after).
+
+**Basic example:**
+```csharp
+for (int i = 0; i < 3; i++)
+    Console.WriteLine(i);     // 0 1 2
+
+int n = 0;
+while (n < 3) { Console.WriteLine(n); n++; }
+
+int m = 5;
+do { Console.WriteLine(m); m++; } while (m < 3); // runs once
+```
+
+**Real-world example:** Sending a reminder email to each of the first 10 overdue accounts.
+
+**Advanced notes:**
+- An empty condition `for(;;)` creates an infinite loop (use with a `break`).
+- Prefer `foreach` over `for` when you just need each item and not the index.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/iteration-statements
+- https://www.w3schools.com/cs/cs_for_loop.php
+
+---
+
+### foreach
+
+**Definition:** `foreach` loops through each item in a collection one at a time.
+
+**Explanation:**
+- Works on arrays, lists, and anything that supports iteration (`IEnumerable`).
+- You get each element directly — no index needed.
+- The loop variable is read-only; you cannot reassign it.
+
+**Basic example:**
+```csharp
+string[] fruits = { "apple", "banana", "mango" };
+
+foreach (string fruit in fruits)
+    Console.WriteLine(fruit);
+```
+
+**Real-world example:** Printing every product in a shopping cart to build the receipt.
+
+**Advanced notes:**
+- You cannot add or remove items from a collection while iterating it with `foreach` (it throws).
+- `foreach` works because the collection implements `GetEnumerator()`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/iteration-statements#the-foreach-statement
+- https://www.w3schools.com/cs/cs_arrays_loop.php
+
+---
+
+### break and continue
+
+**Definition:** `break` exits a loop early; `continue` skips to the next iteration.
+
+**Explanation:**
+- `break` stops the loop completely.
+- `continue` skips the rest of the current pass and moves to the next one.
+- Both are used inside loops to control flow based on conditions.
+
+**Basic example:**
+```csharp
+for (int i = 0; i < 10; i++)
+{
+    if (i == 5) break;     // stop at 5
+    if (i % 2 == 0) continue; // skip even numbers
+    Console.WriteLine(i);  // prints 1, 3
+}
+```
+
+**Real-world example:** Stop searching a list once the matching user is found (`break`); skip inactive users while processing (`continue`).
+
+**Advanced notes:**
+- `break` only exits the innermost loop. To exit nested loops, use a flag or refactor into a method with `return`.
+- Overusing `break`/`continue` can make logic hard to read; sometimes a clearer condition is better.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/statements/jump-statements
+- https://www.w3schools.com/cs/cs_break.php
+
+---
+
+## Module 4: Methods
+
+### Method Declaration
+
+**Definition:** A method is a named, reusable block of code that performs a task.
+
+**Explanation:**
+- A method has a return type, a name, parameters (inputs), and a body.
+- `void` means the method returns nothing.
+- You call (invoke) a method by its name with `()`.
+
+**Basic example:**
+```csharp
+void Greet()
+{
+    Console.WriteLine("Hello!");
+}
+
+Greet(); // call it
+```
+
+**Real-world example:** A `SendWelcomeEmail()` method you call whenever a new user signs up.
+
+**Advanced notes:**
+- **Expression-bodied methods** are a short form: `int Square(int x) => x * x;`.
+- Methods can be `static` (belong to the class) or instance (belong to an object).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods
+- https://www.w3schools.com/cs/cs_methods.php
+
+---
+
+### Parameters and Return Types
+
+**Definition:** Parameters are inputs a method accepts; the return type is the kind of value it gives back.
+
+**Explanation:**
+- Parameters are listed in the parentheses with their types.
+- `return` sends a value back to the caller and ends the method.
+- The return type must match what you `return`.
+
+**Basic example:**
+```csharp
+int Add(int a, int b)
+{
+    return a + b;
+}
+
+int total = Add(3, 4); // 7
+```
+
+**Real-world example:** A `CalculateTax(amount, rate)` method that returns the tax owed.
+
+**Advanced notes:**
+- `out` parameters return extra values; `ref` passes a variable by reference.
+- Return a tuple to send back multiple values: `(int min, int max) GetRange() => (1, 10);`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods#method-parameters
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/return
+
+---
+
+### Method Overloading
+
+**Definition:** Overloading means having multiple methods with the same name but different parameters.
+
+**Explanation:**
+- The compiler picks the correct method based on the arguments you pass.
+- Methods must differ in number or type of parameters (not just return type).
+- It makes APIs easier to use with one familiar name.
+
+**Basic example:**
+```csharp
+int Add(int a, int b) => a + b;
+double Add(double a, double b) => a + b;
+int Add(int a, int b, int c) => a + b + c;
+
+Add(2, 3);        // calls first
+Add(2.5, 1.5);    // calls second
+Add(1, 2, 3);     // calls third
+```
+
+**Real-world example:** `Console.WriteLine` is overloaded to accept strings, numbers, booleans, and more.
+
+**Advanced notes:**
+- You cannot overload by return type alone — it causes a compile error.
+- Overload resolution can get ambiguous with implicit conversions; be explicit when unsure.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/methods#overloaded-methods
+- https://www.w3schools.com/cs/cs_method_overloading.php
+
+---
+
+### Optional Parameters
+
+**Definition:** Optional parameters have default values, so the caller can leave them out.
+
+**Explanation:**
+- Give a parameter a default with `= value`.
+- If the caller omits it, the default is used.
+- Optional parameters must come after all required ones.
+
+**Basic example:**
+```csharp
+void Log(string message, string level = "INFO")
+{
+    Console.WriteLine($"[{level}] {message}");
+}
+
+Log("Started");              // [INFO] Started
+Log("Crash", "ERROR");       // [ERROR] Crash
+```
+
+**Real-world example:** A `Connect(host, port = 5432)` method that uses the standard PostgreSQL port unless told otherwise.
+
+**Advanced notes:**
+- **Named arguments** let you skip middle optional parameters: `Log("Hi", level: "WARN")`.
+- Default values are baked in at the call site, so changing a library default needs a recompile of callers.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/named-and-optional-arguments
+- https://www.w3schools.com/cs/cs_method_parameters.php
+
+---
+
+### Extension Methods
+
+**Definition:** An extension method adds a new method to an existing type without changing its source code.
+
+**Explanation:**
+- It is a `static` method in a `static` class, with `this` before the first parameter.
+- The first parameter is the type you are extending.
+- You then call it as if it belonged to that type.
+
+**Basic example:**
+```csharp
+public static class StringExtensions
+{
+    public static bool IsEmpty(this string text) => string.IsNullOrEmpty(text);
+}
+
+// usage:
+string name = "";
+bool result = name.IsEmpty(); // true
+```
+
+**Real-world example:** LINQ methods like `Where()` and `Select()` are extension methods added to collections.
+
+**Advanced notes:**
+- The class must be in scope (correct `using`) for the extension to appear.
+- If a real instance method has the same signature, it wins over the extension.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/extension-methods
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/classes-and-structs/how-to-implement-and-call-a-custom-extension-method
+
+---
+
+## What to build next
+
+Write a small console app that:
+- asks the user for their name and birth year,
+- calculates their age,
+- prints a personalized greeting using a method,
+- uses a loop to print a countdown.
+
+This uses every Phase 1 concept together. Next: **[Part 2 — Object-Oriented Programming](/feature/techstack/donNetCore/part-02-oop)**.

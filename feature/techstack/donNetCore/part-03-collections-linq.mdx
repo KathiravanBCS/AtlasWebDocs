@@ -1,0 +1,396 @@
+---
+title: "Collections and LINQ"
+sidebarTitle: "Part 3: Collections & LINQ"
+description: "Lists, dictionaries, sets, queues, stacks, and querying data with LINQ."
+icon: "list"
+---
+
+Collections store groups of data. LINQ lets you query and transform that data with clean, readable code.
+
+---
+
+## Module 8: Collections
+
+### Array
+
+**Definition:** An array is a fixed-size, ordered collection of elements of the same type.
+
+**Explanation:**
+- The size is set when created and cannot change.
+- Elements are accessed by a zero-based index.
+- Fast access, but you cannot easily add or remove items.
+
+**Basic example:**
+```csharp
+int[] numbers = { 10, 20, 30 };
+Console.WriteLine(numbers[0]);   // 10
+numbers[1] = 25;                 // change a value
+Console.WriteLine(numbers.Length); // 3
+```
+
+**Real-world example:** Storing the 7 daily temperatures of a week, where the count never changes.
+
+**Advanced notes:**
+- Multidimensional `int[,]` and jagged `int[][]` arrays exist for grids/tables.
+- Use `Array.Sort()`, `Array.IndexOf()`, and ranges like `numbers[1..]` for slicing.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/programming-guide/arrays/
+- https://www.w3schools.com/cs/cs_arrays.php
+
+---
+
+### List&lt;T&gt;
+
+**Definition:** `List<T>` is a resizable, ordered collection of items of type `T`.
+
+**Explanation:**
+- Unlike arrays, it grows and shrinks automatically.
+- Add with `Add()`, remove with `Remove()`, access by index.
+- The most commonly used collection in C#.
+
+**Basic example:**
+```csharp
+var names = new List<string>();
+names.Add("Asha");
+names.Add("Ravi");
+names.Remove("Asha");
+Console.WriteLine(names.Count);  // 1
+Console.WriteLine(names[0]);     // Ravi
+```
+
+**Real-world example:** Holding the list of items in a shopping cart, where users add and remove products freely.
+
+**Advanced notes:**
+- `List<T>` is backed by an array that resizes (doubles) as it fills; set initial capacity to avoid resizes.
+- Use `AddRange`, `Contains`, `Find`, and `RemoveAll` for common tasks.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1
+- https://www.w3schools.com/cs/cs_list.php
+
+---
+
+### Dictionary&lt;TKey, TValue&gt;
+
+**Definition:** A dictionary stores key-value pairs, where each unique key maps to a value.
+
+**Explanation:**
+- Look up values instantly by their key (very fast).
+- Keys must be unique; values can repeat.
+- Great for lookups, counts, and caches.
+
+**Basic example:**
+```csharp
+var ages = new Dictionary<string, int>();
+ages["Asha"] = 30;
+ages["Ravi"] = 25;
+
+Console.WriteLine(ages["Asha"]);          // 30
+bool found = ages.TryGetValue("Ravi", out int age); // safe lookup
+```
+
+**Real-world example:** Mapping each product code to its price for quick price lookups at checkout.
+
+**Advanced notes:**
+- Accessing a missing key with `[]` throws; use `TryGetValue` or `ContainsKey` to be safe.
+- Lookups are O(1) on average because it uses hashing of the key.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2
+- https://www.w3schools.com/cs/cs_dictionary.php
+
+---
+
+### HashSet&lt;T&gt;
+
+**Definition:** A `HashSet<T>` is a collection of unique items with no duplicates and no guaranteed order.
+
+**Explanation:**
+- Adding a duplicate is simply ignored.
+- Very fast for checking "does this exist?".
+- Supports set operations like union and intersection.
+
+**Basic example:**
+```csharp
+var tags = new HashSet<string>();
+tags.Add("c#");
+tags.Add("c#");   // ignored
+Console.WriteLine(tags.Count);          // 1
+Console.WriteLine(tags.Contains("c#")); // true
+```
+
+**Real-world example:** Tracking which user IDs have already voted, to prevent double voting.
+
+**Advanced notes:**
+- Use `UnionWith`, `IntersectWith`, and `ExceptWith` for set math.
+- Membership checks are O(1), much faster than scanning a `List` with `Contains`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.hashset-1
+- https://learn.microsoft.com/en-us/dotnet/standard/collections/
+
+---
+
+### Queue and Stack
+
+**Definition:** A `Queue<T>` is first-in-first-out (FIFO); a `Stack<T>` is last-in-first-out (LIFO).
+
+**Explanation:**
+- **Queue:** add to the back (`Enqueue`), remove from the front (`Dequeue`) — like a line of people.
+- **Stack:** add to the top (`Push`), remove from the top (`Pop`) — like a pile of plates.
+- `Peek()` looks at the next item without removing it.
+
+**Basic example:**
+```csharp
+var queue = new Queue<string>();
+queue.Enqueue("A"); queue.Enqueue("B");
+Console.WriteLine(queue.Dequeue()); // A (first in)
+
+var stack = new Stack<string>();
+stack.Push("A"); stack.Push("B");
+Console.WriteLine(stack.Pop());     // B (last in)
+```
+
+**Real-world example:** A print queue processes documents in order (Queue); an undo feature reverts the most recent action first (Stack).
+
+**Advanced notes:**
+- For multithreaded scenarios use `ConcurrentQueue<T>` / `ConcurrentStack<T>`.
+- Calling `Dequeue`/`Pop` on an empty collection throws; check `Count` first.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.queue-1
+- https://learn.microsoft.com/en-us/dotnet/api/system.collections.generic.stack-1
+
+---
+
+## Module 9: LINQ
+
+LINQ (Language Integrated Query) provides a uniform way to filter, sort, and transform data. Examples below use:
+```csharp
+var nums = new List<int> { 5, 2, 8, 1, 9, 2 };
+```
+
+### Where
+
+**Definition:** `Where` filters a sequence, keeping only items that match a condition.
+
+**Explanation:**
+- Takes a condition (predicate) returning true/false.
+- Returns a new sequence with the matching items.
+- Does not change the original collection.
+
+**Basic example:**
+```csharp
+var bigNums = nums.Where(n => n > 3); // 5, 8, 9
+```
+
+**Real-world example:** Showing only products that are in stock from a full product list.
+
+**Advanced notes:**
+- LINQ is **deferred** — it runs only when you iterate (e.g., `ToList()`).
+- Chain multiple `Where` calls, or combine conditions with `&&`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.where
+
+---
+
+### Select
+
+**Definition:** `Select` transforms each item into a new form (projection).
+
+**Explanation:**
+- Takes each element and returns a new shape (a number, a string, or a new object).
+- The result count is the same as the input.
+- Often used to pick specific fields.
+
+**Basic example:**
+```csharp
+var doubled = nums.Select(n => n * 2);     // 10, 4, 16, 2, 18, 4
+var labels = nums.Select(n => $"#{n}");    // "#5", "#2", ...
+```
+
+**Real-world example:** Turning a list of `User` objects into a list of just their email addresses for a mailing list.
+
+**Advanced notes:**
+- `SelectMany` flattens nested collections into one sequence.
+- `Select` with an index: `nums.Select((n, i) => $"{i}:{n}")`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.select
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/standard-query-operators/projection-operations
+
+---
+
+### OrderBy
+
+**Definition:** `OrderBy` sorts a sequence in ascending order by a chosen key.
+
+**Explanation:**
+- Provide the key to sort by (`n => n`, or `p => p.Name`).
+- Use `OrderByDescending` for descending order.
+- Chain `ThenBy` for secondary sorting.
+
+**Basic example:**
+```csharp
+var sorted = nums.OrderBy(n => n);            // 1, 2, 2, 5, 8, 9
+var desc = nums.OrderByDescending(n => n);    // 9, 8, 5, 2, 2, 1
+```
+
+**Real-world example:** Sorting employees by department, then by salary within each department.
+
+**Advanced notes:**
+- `OrderBy(...).ThenBy(...)` does multi-level sorting; do not chain two `OrderBy` calls.
+- Sorting is stable — equal items keep their original relative order.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.orderby
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/standard-query-operators/sorting-data
+
+---
+
+### GroupBy
+
+**Definition:** `GroupBy` organizes items into groups that share a common key.
+
+**Explanation:**
+- Returns groups; each group has a `Key` and the items in it.
+- Useful for categorizing and aggregating data.
+- Often combined with `Count()`, `Sum()`, etc.
+
+**Basic example:**
+```csharp
+var groups = nums.GroupBy(n => n % 2 == 0 ? "even" : "odd");
+foreach (var g in groups)
+    Console.WriteLine($"{g.Key}: {g.Count()}"); // even: 3, odd: 3
+```
+
+**Real-world example:** Grouping sales by month to see how many orders each month had.
+
+**Advanced notes:**
+- Pair with `Select` to build summary objects: `g => new { g.Key, Total = g.Sum() }`.
+- In EF Core, grouping is often translated to SQL `GROUP BY`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.groupby
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/standard-query-operators/grouping-data
+
+---
+
+### Any and All
+
+**Definition:** `Any` checks if at least one item matches; `All` checks if every item matches.
+
+**Explanation:**
+- Both return a `bool`.
+- `Any()` with no condition checks if the collection has any items.
+- `All` returns true for an empty collection.
+
+**Basic example:**
+```csharp
+bool hasBig = nums.Any(n => n > 8);  // true (9)
+bool allPos = nums.All(n => n > 0);  // true
+bool hasItems = nums.Any();          // true
+```
+
+**Real-world example:** Checking whether any item in a cart is out of stock before allowing checkout.
+
+**Advanced notes:**
+- `Any()` is faster than `Count() > 0` because it stops at the first match.
+- Use `Contains` for simple membership instead of `Any(x => x == value)`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.any
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.all
+
+---
+
+### FirstOrDefault
+
+**Definition:** `FirstOrDefault` returns the first matching item, or a default value if none is found.
+
+**Explanation:**
+- Returns the first element (optionally matching a condition).
+- If nothing matches, returns the type's default (`null` for objects, `0` for int).
+- Safer than `First()`, which throws when empty.
+
+**Basic example:**
+```csharp
+int first = nums.FirstOrDefault(n => n > 8); // 9
+int none = nums.FirstOrDefault(n => n > 99); // 0 (default)
+```
+
+**Real-world example:** Finding a user by email; returns null if no user has that email, which you can handle gracefully.
+
+**Advanced notes:**
+- Related: `SingleOrDefault` (expects 0 or 1 match, throws on 2+), `LastOrDefault`.
+- You can supply a custom default in newer versions: `FirstOrDefault(predicate, -1)`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.firstordefault
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/standard-query-operators/quantifier-operations
+
+---
+
+### Join
+
+**Definition:** `Join` combines two sequences based on a matching key, like a SQL inner join.
+
+**Explanation:**
+- Matches items from two collections where their keys are equal.
+- Produces a new result combining fields from both.
+- Useful for relating separate data sets.
+
+**Basic example:**
+```csharp
+var users = new[] { new { Id = 1, Name = "Asha" }, new { Id = 2, Name = "Ravi" } };
+var orders = new[] { new { UserId = 1, Item = "Book" } };
+
+var result = users.Join(orders,
+    u => u.Id, o => o.UserId,
+    (u, o) => $"{u.Name} bought {o.Item}"); // "Asha bought Book"
+```
+
+**Real-world example:** Joining a customers table with an orders table to list each customer's purchases.
+
+**Advanced notes:**
+- `GroupJoin` produces a left-outer-join-like result (each left item with its matching group).
+- With EF Core, prefer navigation properties + `Include` over manual joins where possible.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.linq.enumerable.join
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/standard-query-operators/join-operations
+
+---
+
+## Practical exercises
+
+Try these to combine collections + LINQ. Build small console apps.
+
+### Employee Management
+- Create an `Employee` record (Id, Name, Department, Salary).
+- Store a `List<Employee>`.
+- Use LINQ to: list employees in a given department (`Where`), find the highest paid (`OrderByDescending` + `First`), and get the average salary per department (`GroupBy` + `Average`).
+
+### Product Filtering
+- Create a `Product` (Name, Category, Price, InStock).
+- Filter products by category and price range (`Where`).
+- Project only name and price (`Select`).
+- Sort results by price (`OrderBy`).
+
+### Report Generation
+- From a list of orders (Date, Amount), group by month (`GroupBy`).
+- For each month output total and count.
+- Identify the best-selling month (`OrderByDescending` on total).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/get-started/
+- https://learn.microsoft.com/en-us/dotnet/csharp/linq/standard-query-operators/
+
+---
+
+## What to build next
+
+Complete the three exercises above in one console app, sharing the same sample data. Next: **[Part 4 — Exception Handling and Async Programming](/feature/techstack/donNetCore/part-04-exceptions-async)**.

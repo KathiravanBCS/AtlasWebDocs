@@ -1,0 +1,44 @@
+---
+title: AI-native documentation
+sidebarTitle: AI-native docs
+description: Mintlify's first-class AI features — the assistant, semantic search, llms.txt, and an MCP server.
+icon: robot
+---
+
+Modern docs are read by agents as much as people. Mintlify treats this as a
+first-class concern.
+
+<CardGroup cols={2}>
+  <Card title="Assistant" icon="comments">
+    An in-page chat grounded in your content — answers with citations to real pages.
+  </Card>
+  <Card title="Semantic search" icon="magnifying-glass">
+    Meaning-based search, not just keyword matching, indexed on every build.
+  </Card>
+  <Card title="llms.txt" icon="file-lines">
+    Auto-generated index of your docs at `/llms.txt`, with a full-content
+    `/llms-full.txt`, so LLMs can discover and ingest your content.
+  </Card>
+  <Card title="MCP server" icon="plug">
+    Expose docs to agents via the Model Context Protocol so tools like Claude can
+    query them directly.
+  </Card>
+</CardGroup>
+
+## Make content AI-retrievable
+
+The same habits that help humans help retrieval:
+
+- **One clear job per page** — narrow pages chunk and retrieve better than sprawling ones.
+- **Descriptive `title` + `description`** — these become the retrieval signal.
+- **Real headings, not bold text** — structure is what chunking keys off.
+- **Self-contained sections** — assume a reader (or model) landed mid-page from search.
+
+<Tip>
+  You usually don't author `llms.txt` by hand — Mintlify generates it. Your job is
+  to write clean, well-structured Markdown so the generated artifact is high quality.
+</Tip>
+
+<Card title="Next: SEO, analytics & versioning" icon="arrow-right" href="/feature/mintlify/seo-analytics">
+  Metadata, redirects, and managing versions.
+</Card>

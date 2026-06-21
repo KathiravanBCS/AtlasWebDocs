@@ -1,0 +1,72 @@
+---
+title: The navigation system
+sidebarTitle: Navigation
+description: How Mintlify's navigation hierarchy works — dropdowns, tabs, anchors, groups, and pages.
+icon: sitemap
+---
+
+Navigation is a **hierarchy**, and getting the levels right is what separates a
+tidy docs site from a confusing one.
+
+```text
+Dropdown / Version / Language   (top-level context switch)
+    └── Tab                     (major section, e.g. "Guides" vs "API")
+          └── Anchor            (persistent sidebar link, often external)
+                └── Group       (a labeled cluster in the sidebar)
+                      └── Page  (a single MDX file)
+```
+
+## Groups and nested groups
+
+```json
+{
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": ["index", "quickstart"]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "guides/authentication",
+          {
+            "group": "Webhooks",
+            "pages": ["guides/webhooks/intro", "guides/webhooks/security"]
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Tabs for top-level sections
+
+```json
+{
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [{ "group": "Get Started", "pages": ["index"] }]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "api-reference/openapi.json"
+      }
+    ]
+  }
+}
+```
+
+<Warning>
+  A page that isn't listed in `navigation` still builds and is reachable by URL,
+  but it **won't appear in the sidebar or be fully discoverable**. Orphan pages are
+  the most common "my doc is missing" cause — if it's not in `docs.json`, it's not
+  in the menu.
+</Warning>
+
+<Card title="Next: writing content" icon="arrow-right" href="/feature/mintlify/writing-content">
+  MDX and frontmatter, field by field.
+</Card>

@@ -1,0 +1,29 @@
+---
+title: SEO, analytics, and versioning
+sidebarTitle: SEO & versioning
+description: Page metadata, redirects, analytics, and how to manage product/API versions.
+icon: magnifying-glass
+---
+
+<Tabs>
+  <Tab title="SEO">
+    - `title` + `description` frontmatter drive page metadata and Open Graph tags.
+    - Use `redirects` in `docs.json` whenever a URL changes — broken links erode ranking.
+    - Set `noindex: true` on internal or draft pages you don't want crawled.
+    - Run `mint broken-links` in CI so dead links never merge.
+  </Tab>
+  <Tab title="Analytics">
+    Wire up your provider under `integrations` in `docs.json`. Track what matters:
+    most-viewed pages, **search queries that return nothing** (a backlog of docs to
+    write), and drop-off points in onboarding flows.
+  </Tab>
+  <Tab title="Versioning">
+    Use **versions** for product/API generations (`v1`, `v2`) and **redirects** for
+    deprecations. Don't fork the whole repo per version unless the products have
+    genuinely diverged — duplicated content rots independently.
+  </Tab>
+</Tabs>
+
+<Card title="Next: Git & deployment" icon="arrow-right" href="/feature/mintlify/deployment">
+  Connect a repo and ship on merge.
+</Card>

@@ -1,0 +1,34 @@
+---
+title: Enterprise architecture
+sidebarTitle: Enterprise
+description: Access control, monorepo vs. multi-repo, multi-product portals, and audit/compliance.
+icon: building
+---
+
+For larger orgs, the decisions are organizational, not just technical.
+
+<AccordionGroup>
+  <Accordion title="Access control & SSO" icon="lock">
+    Gate private docs behind SSO and role-based access. Keep public and internal
+    content cleanly separated — ideally distinct deployments — so an
+    authorization mistake can't leak internal pages.
+  </Accordion>
+  <Accordion title="Monorepo vs. multi-repo" icon="folder-tree">
+    A **monorepo** keeps docs next to code (easy to keep in sync, one review flow).
+    **Multi-repo** suits independent teams but needs a strategy to assemble a unified
+    portal. Choose based on team boundaries, not aesthetics.
+  </Accordion>
+  <Accordion title="Multi-product portals" icon="grid-2">
+    Use top-level **dropdowns or tabs** to switch products while sharing branding and
+    search. Resist duplicating shared concepts across products — factor them into
+    snippets.
+  </Accordion>
+  <Accordion title="Audit & compliance" icon="clipboard-check">
+    Your Git history is already an audit log for content. Pair it with platform-level
+    audit logging for access and configuration changes to satisfy compliance reviews.
+  </Accordion>
+</AccordionGroup>
+
+<Card title="Next: best practices" icon="arrow-right" href="/feature/mintlify/best-practices">
+  The checklist before you launch.
+</Card>

@@ -1,0 +1,33 @@
+---
+title: The request lifecycle
+sidebarTitle: Request lifecycle
+description: What happens between a git push and a live documentation page.
+icon: diagram-project
+---
+
+Understanding what happens on `git push` removes most of the "why isn't my change
+live?" confusion.
+
+```mermaid
+flowchart TD
+    A[Author edits MDX in Git] --> B[Pull request opened]
+    B --> C[Mintlify builds a preview deployment]
+    C --> D[Review + merge to default branch]
+    D --> E[Mintlify production build]
+    E --> F[MDX compiled + search indexed]
+    F --> G[llms.txt / llms-full.txt generated]
+    G --> H[Deployed to CDN]
+    H --> I[Humans: site + search + assistant]
+    H --> J[Machines: MCP + llms.txt + crawlers]
+```
+
+Key implications:
+
+- **Every PR gets a preview URL** — review rendered docs, not raw diffs.
+- **Production deploys on merge to the default branch** (typically `main`).
+- A **failed build does not deploy** — broken MDX or a malformed `docs.json`
+  blocks the release, which is the behavior you want.
+
+<Card title="Next: project structure" icon="arrow-right" href="/feature/mintlify/project-structure">
+  How a clean Mintlify repository is laid out.
+</Card>

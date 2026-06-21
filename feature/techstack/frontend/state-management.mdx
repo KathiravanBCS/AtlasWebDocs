@@ -1,0 +1,30 @@
+---
+title: State Management
+sidebarTitle: State Management
+description: Server state with TanStack Query and client state with Zustand.
+icon: diagram-project
+---
+
+We split state into **server state** (data from APIs, cached and synchronized) and
+**client state** (local UI state).
+
+## Server State — TanStack
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **TanStack React Query** | Async server-state management — caching, refetching, mutations, and invalidation. | [tanstack.com/query](https://tanstack.com/query/latest) |
+
+## Client State — Zustand
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **Zustand** | Minimal, hook-based global state store with no boilerplate. | [zustand.docs.pmnd.rs](https://zustand.docs.pmnd.rs) |
+
+<Note>
+  Rule of thumb: if the data comes from the server, it belongs in **React Query**;
+  only genuinely local UI state goes in **Zustand**.
+</Note>
+
+<Card title="Next: Authentication & Authorization" icon="arrow-right" href="/feature/techstack/frontend/auth">
+  Azure MSAL and CASL.
+</Card>

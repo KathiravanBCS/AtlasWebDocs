@@ -1,0 +1,423 @@
+---
+title: "ASP.NET Core Fundamentals"
+sidebarTitle: "Part 5: ASP.NET Core"
+description: "The ASP.NET Core request pipeline: controllers, routing, middleware, and dependency injection."
+icon: "server"
+---
+
+ASP.NET Core is the framework for building web APIs and web apps in .NET. This part covers its architecture, controllers, middleware, and dependency injection.
+
+---
+
+## Module 12: ASP.NET Core Overview
+
+### Web API Architecture
+
+**Definition:** A Web API is a server application that exposes data and actions over HTTP, usually returning JSON.
+
+**Explanation:**
+- Clients (web, mobile, other services) send HTTP requests; the API responds with data.
+- It separates the backend from the frontend, so many clients can share one API.
+- Built around controllers, routing, services, and a database layer.
+
+**Basic example:**
+A minimal API in `Program.cs`:
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
+
+app.MapGet("/hello", () => "Hello API");
+app.Run();
+```
+
+**Real-world example:** A food delivery app's mobile and web frontends both call the same backend API to fetch restaurants and place orders.
+
+**Advanced notes:**
+- ASP.NET Core supports both **controller-based APIs** and **minimal APIs** (lightweight, function-style).
+- APIs are typically stateless — each request carries everything needed (often a token).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/
+
+---
+
+### Request Lifecycle
+
+**Definition:** The request lifecycle is the path an HTTP request takes from arrival to response.
+
+**Explanation:**
+- A request enters the server, passes through the middleware pipeline, reaches routing, then a controller action.
+- The action runs logic and returns a result.
+- The response travels back out through the same middleware.
+
+**Basic example:**
+```
+Request → Middleware (logging, auth) → Routing → Controller Action → Response
+```
+
+**Real-world example:** A `GET /products` request flows through authentication middleware, gets routed to `ProductsController.GetAll()`, and returns a JSON list.
+
+**Advanced notes:**
+- Middleware order matters: each piece can short-circuit the request (e.g., auth rejecting it).
+- Filters (authorization, action, exception, result) run around controller actions specifically.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/actions
+
+---
+
+### Kestrel Server
+
+**Definition:** Kestrel is the fast, cross-platform web server built into ASP.NET Core.
+
+**Explanation:**
+- It is the default server that actually receives HTTP requests.
+- It runs on Windows, Linux, and macOS.
+- In production it often sits behind a reverse proxy (Nginx, IIS, or a cloud load balancer).
+
+**Basic example:**
+Kestrel starts automatically with:
+```csharp
+app.Run(); // hosts the app on Kestrel
+```
+
+**Real-world example:** A .NET API deployed in a Docker container on Linux uses Kestrel to serve requests, with Nginx in front for TLS.
+
+**Advanced notes:**
+- A reverse proxy adds TLS termination, load balancing, and request buffering.
+- Configure limits (max request size, connection limits, timeouts) for security and stability.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel
+- https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/
+
+---
+
+## Module 13: Controllers and Routing
+
+### API Controllers
+
+**Definition:** A controller is a class that groups related API endpoints (actions) together.
+
+**Explanation:**
+- Inherit from `ControllerBase` and add the `[ApiController]` attribute.
+- Each public method is an action that handles a request.
+- Action methods return results like `Ok()`, `NotFound()`, or data.
+
+**Basic example:**
+```csharp
+[ApiController]
+[Route("api/products")]
+public class ProductsController : ControllerBase
+{
+    [HttpGet]
+    public IActionResult GetAll() => Ok(new[] { "Pen", "Book" });
+}
+```
+
+**Real-world example:** A `UsersController` holds endpoints to register, log in, and fetch a user's profile.
+
+**Advanced notes:**
+- `[ApiController]` enables automatic model validation and cleaner error responses.
+- Return `ActionResult<T>` to combine a typed result with status codes.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/actions
+
+---
+
+### Attribute Routing
+
+**Definition:** Attribute routing defines URLs directly on controllers and actions using attributes.
+
+**Explanation:**
+- `[Route(...)]` sets a base path on the controller.
+- `[HttpGet]`, `[HttpPost]`, etc. map actions to HTTP verbs and sub-paths.
+- The full URL is the controller route + action route.
+
+**Basic example:**
+```csharp
+[Route("api/orders")]
+public class OrdersController : ControllerBase
+{
+    [HttpGet]                 // GET  api/orders
+    public IActionResult List() => Ok();
+
+    [HttpGet("recent")]       // GET  api/orders/recent
+    public IActionResult Recent() => Ok();
+}
+```
+
+**Real-world example:** Designing clean, predictable URLs like `api/customers/active` for the active-customers endpoint.
+
+**Advanced notes:**
+- Use tokens like `[Route("api/[controller]")]` to auto-insert the controller name.
+- Keep routes noun-based and consistent (REST style), avoiding verbs in the URL.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing
+
+---
+
+### Route Parameters
+
+**Definition:** Route parameters are variable parts of the URL path captured as method arguments.
+
+**Explanation:**
+- Define a placeholder in the route with `{name}`.
+- The matching method parameter receives the value.
+- You can constrain types, e.g., `{id:int}`.
+
+**Basic example:**
+```csharp
+[HttpGet("{id:int}")]          // GET api/products/5
+public IActionResult GetById(int id) => Ok($"Product {id}");
+```
+
+**Real-world example:** Fetching one specific blog post by its ID: `GET api/posts/42`.
+
+**Advanced notes:**
+- Constraints like `:int`, `:guid`, `:min(1)` reject invalid values before the action runs.
+- Optional parameters use `{id?}`; defaults can be set in the route template.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing#route-constraints
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing
+
+---
+
+### Query Parameters
+
+**Definition:** Query parameters are key-value pairs in the URL after `?`, used for filtering and options.
+
+**Explanation:**
+- They appear as `?key=value&key2=value2`.
+- Bind automatically to method parameters by name.
+- Best for optional inputs like search, sorting, and paging.
+
+**Basic example:**
+```csharp
+// GET api/products?category=books&page=2
+[HttpGet]
+public IActionResult Search(string category, int page = 1)
+    => Ok($"{category}, page {page}");
+```
+
+**Real-world example:** A product search endpoint that accepts `?minPrice=100&maxPrice=500&sort=price`.
+
+**Advanced notes:**
+- Use `[FromQuery]` explicitly to bind a whole object of query values.
+- Route parameters identify a resource; query parameters refine/filter it.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/mvc/models/model-binding
+- https://learn.microsoft.com/en-us/aspnet/core/web-api/#binding-source-parameter-inference
+
+---
+
+## Module 14: Middleware
+
+### Built-in Middleware
+
+**Definition:** Built-in middleware are ready-made components ASP.NET Core provides for common request handling.
+
+**Explanation:**
+- Added in `Program.cs` with `app.UseXxx()` methods.
+- Examples: HTTPS redirection, authentication, authorization, static files, CORS.
+- Each handles one cross-cutting concern.
+
+**Basic example:**
+```csharp
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+```
+
+**Real-world example:** Enabling `UseStaticFiles()` so the server can serve images and CSS from the `wwwroot` folder.
+
+**Advanced notes:**
+- Order is critical: `UseAuthentication` must come before `UseAuthorization`.
+- `UseRouting` and endpoint mapping place routing in the pipeline.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/#built-in-middleware
+
+---
+
+### Custom Middleware
+
+**Definition:** Custom middleware is your own component inserted into the request pipeline.
+
+**Explanation:**
+- It receives the request, can act before and after the next component, and calls `next`.
+- Useful for logging, timing, headers, or custom checks.
+- Written as a class or an inline lambda.
+
+**Basic example:**
+```csharp
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"Incoming: {context.Request.Path}");
+    await next();                 // pass to the next middleware
+    Console.WriteLine($"Outgoing: {context.Response.StatusCode}");
+});
+```
+
+**Real-world example:** A middleware that logs how long every request takes and flags slow ones.
+
+**Advanced notes:**
+- For reusable middleware, create a class with an `InvokeAsync(HttpContext, RequestDelegate)` method.
+- Not calling `next()` short-circuits the pipeline (the request stops there).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/write
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/
+
+---
+
+### Request Pipeline
+
+**Definition:** The request pipeline is the ordered chain of middleware every request passes through.
+
+**Explanation:**
+- Each middleware can process the request, then call the next, then process the response.
+- It works like nested layers — request goes in, response comes back out.
+- The order you add middleware defines the order they run.
+
+**Basic example:**
+```
+Request → Logging → Auth → Routing → Endpoint → (back up) → Response
+```
+
+**Real-world example:** A request is logged, authenticated, authorized, routed, handled, then the response is compressed on the way out.
+
+**Advanced notes:**
+- `Use` chains middleware; `Run` is terminal (ends the pipeline); `Map` branches by path.
+- Place exception-handling middleware early so it can catch errors from everything below it.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/#middleware-order
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/
+
+---
+
+## Module 15: Dependency Injection
+
+### Service Registration
+
+**Definition:** Service registration tells the DI container how to create and supply your services.
+
+**Explanation:**
+- Register services in `Program.cs` with `builder.Services.Add...`.
+- You map an interface to its implementation.
+- The container then injects them wherever requested (e.g., into controllers).
+
+**Basic example:**
+```csharp
+builder.Services.AddScoped<IUserService, UserService>();
+
+// injected automatically:
+public class UsersController(IUserService service) : ControllerBase { }
+```
+
+**Real-world example:** Registering `IEmailSender → SmtpEmailSender` once, so every controller that needs to send email just asks for `IEmailSender`.
+
+**Advanced notes:**
+- DI removes manual `new` calls and decouples classes (supports the Dependency Inversion Principle).
+- Constructor injection is the standard approach in ASP.NET Core.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection
+
+---
+
+### Transient
+
+**Definition:** A transient service gets a new instance every time it is requested.
+
+**Explanation:**
+- Registered with `AddTransient`.
+- A fresh object is created each time it is injected or resolved.
+- Best for lightweight, stateless services.
+
+**Basic example:**
+```csharp
+builder.Services.AddTransient<IGuidProvider, GuidProvider>();
+```
+
+**Real-world example:** A small helper that generates a unique ID — a new one each time is fine and expected.
+
+**Advanced notes:**
+- Avoid transient for expensive-to-create objects (it adds overhead).
+- Injecting a transient into a singleton makes it effectively live as long as the singleton.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#service-lifetimes
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection#service-lifetimes
+
+---
+
+### Scoped
+
+**Definition:** A scoped service gets one instance per HTTP request (one per scope).
+
+**Explanation:**
+- Registered with `AddScoped`.
+- The same instance is shared throughout a single request, then discarded.
+- The default and most common lifetime for web apps.
+
+**Basic example:**
+```csharp
+builder.Services.AddScoped<IOrderService, OrderService>();
+```
+
+**Real-world example:** A database context (`DbContext`) is scoped so all work within one request shares the same connection/transaction state.
+
+**Advanced notes:**
+- EF Core's `DbContext` should be scoped — never singleton (it is not thread-safe).
+- A new scope is created per request automatically; you can create manual scopes in background jobs.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#service-lifetimes
+- https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/
+
+---
+
+### Singleton
+
+**Definition:** A singleton service is created once and shared for the entire application lifetime.
+
+**Explanation:**
+- Registered with `AddSingleton`.
+- The same single instance serves every request.
+- Best for stateless, shared, thread-safe services and caches.
+
+**Basic example:**
+```csharp
+builder.Services.AddSingleton<IAppCache, AppCache>();
+```
+
+**Real-world example:** An in-memory configuration or cache service shared across all users and requests.
+
+**Advanced notes:**
+- Singletons must be thread-safe since many requests use them at once.
+- Never inject a scoped service (like `DbContext`) directly into a singleton — it causes lifetime errors.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection#service-lifetimes
+- https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-guidelines
+
+---
+
+## What to build next
+
+Create a Web API with a `ProductsController` exposing GET (all + by id with a route parameter), a search endpoint using query parameters, and an `IProductService` registered as scoped. Add custom middleware that logs each request's path and duration.
+
+Next: **[Part 6 — Database Access (EF Core)](/feature/techstack/donNetCore/part-06-database-ef-core)**.

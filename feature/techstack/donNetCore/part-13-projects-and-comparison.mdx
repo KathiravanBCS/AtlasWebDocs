@@ -1,0 +1,175 @@
+---
+title: "Capstone Projects & .NET Reference"
+sidebarTitle: "Part 13: Projects & Reference"
+description: "Capstone project ideas, .NET Framework vs modern .NET, and a learning path."
+icon: "flag-checkered"
+---
+
+This final part puts everything together: projects to build, a suggested schedule, the difference between old .NET Framework and modern .NET, and the recommended learning path.
+
+---
+
+## Capstone Projects
+
+Projects are where the learning sticks. Build them in order — each adds new concepts from the course. Don't aim for perfect; aim for finished and working.
+
+### Beginner Projects
+
+Goal: practice C#, OOP, EF Core, and basic CRUD APIs.
+
+**Student Management API**
+- Manage students and courses with full CRUD.
+- Concepts used: controllers, routing, DI, EF Core, DTOs, validation.
+- Stretch: add search and pagination to the students list.
+
+**Employee Management API**
+- Manage employees, departments, and roles.
+- Concepts used: relationships in EF Core (employee → department), error handling, logging.
+- Stretch: add filtering by department with LINQ.
+
+### Intermediate Projects
+
+Goal: add authentication, business rules, and more complex data relationships.
+
+**Leave Management System**
+- Employees request leave; managers approve or reject.
+- Concepts used: JWT authentication, roles/policies, status workflows, EF Core relationships.
+- Stretch: email notification when a request status changes.
+
+**Inventory Management System**
+- Track products, stock levels, and stock movements.
+- Concepts used: transactions, caching frequently-read data, background job for low-stock alerts.
+- Stretch: a report endpoint summarizing stock by category.
+
+### Advanced Projects
+
+Goal: production-grade systems with architecture, scale, and external services.
+
+**Email Campaign Platform**
+- Create campaigns, manage contacts, send and track emails.
+- Concepts used: third-party email providers, templates, background jobs, structured logging, click/open tracking.
+
+**HRMS System**
+- Employees, attendance, payroll, leave, and roles in one system.
+- Concepts used: Clean Architecture, CQRS, repository + unit of work, claims-based authorization.
+
+**E-commerce Backend**
+- Products, cart, orders, payments, and inventory.
+- Concepts used: caching, distributed cache for carts, transactions, robust error handling, integration tests.
+
+**Microservices-based Order Management System**
+- Split into Catalog, Orders, Inventory, and Notification services.
+- Concepts used: service communication, API gateway, message queues, event-driven architecture, Docker, CI/CD.
+
+---
+
+## Recommended Duration
+
+A suggested pace for a beginner studying part-time. Adjust to your own schedule — understanding matters more than speed.
+
+| Stage | Topics | Suggested Time |
+| --- | --- | --- |
+| C# Fundamentals | Phase 1 | 2 weeks |
+| OOP + LINQ | Phases 2–3 | 2 weeks |
+| ASP.NET Core | Phase 5 | 3 weeks |
+| EF Core | Phase 6 | 2 weeks |
+| Security | Phase 8 | 1 week |
+| Testing | Phase 9 | 1 week |
+| Architecture | Phase 10 | 2 weeks |
+| Advanced Topics | Phase 12 | 2–3 weeks |
+| Project | Capstone | 2 weeks |
+
+**Total: roughly 12–16 weeks.**
+
+> Tip: build a small project alongside each stage rather than waiting until the end. Applying a topic immediately is the fastest way to remember it.
+
+---
+
+## .NET Framework vs Modern .NET
+
+You'll see two worlds in older tutorials and codebases: the legacy **.NET Framework** (Windows-only, ASP.NET MVC) and **modern .NET** (cross-platform, ASP.NET Core). This section explains the differences so old material doesn't confuse you.
+
+### ASP.NET MVC (.NET Framework) vs ASP.NET Core (Modern .NET)
+
+| Area | ASP.NET MVC (.NET Framework) | ASP.NET Core (Modern .NET) |
+| --- | --- | --- |
+| Platform | Windows only | Cross-platform (Windows, Linux, macOS) |
+| Project files | `Global.asax`, `Web.config` | `Program.cs`, `appsettings.json` |
+| Startup | `Global.asax` + config files | `Program.cs` (single entry point) |
+| Static files | Various folders | `wwwroot` |
+| Building blocks | Controllers, Models, Views | Controllers, Models (plus minimal APIs) |
+| Status | Legacy / maintenance | Actively developed |
+
+- Modern .NET has **no `Web.config` or `Global.asax`** — configuration and startup live in `appsettings.json` and `Program.cs`.
+- Static files (CSS, JS, images) live in the **`wwwroot`** folder.
+
+### Dependency Injection
+
+- **.NET Framework:** DI was not built in; you added a third-party container like **Unity** (`UnityContainer`) or Autofac.
+- **Modern .NET:** DI is **built in**. You register services directly:
+
+```csharp
+builder.Services.AddScoped<IUserService, UserService>();
+```
+
+### Configuration
+
+- **.NET Framework:** settings lived in **`Web.config`** as XML (`<appSettings>`).
+- **Modern .NET:** settings live in **`appsettings.json`** as JSON, read through `IConfiguration` and the Options pattern (see Part 11).
+
+### Middleware
+
+- **.NET Framework:** the request pipeline used HTTP modules and handlers, which were harder to configure.
+- **Modern .NET:** a clean, ordered **middleware pipeline** configured in `Program.cs`:
+
+```csharp
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+```
+
+The request flows through it in order:
+
+```text
+Request → Middleware → Controller → Response
+```
+
+Each middleware can inspect or change the request on the way in and the response on the way out (covered in Part 5).
+
+---
+
+## Which to Learn in 2026
+
+- Learn **modern .NET** (currently **.NET 10**) with **ASP.NET Core**. This is what new projects use and what employers hire for.
+- **Do not start with .NET Framework.** Only touch it if you need to maintain an existing legacy system.
+- The skills in this course (C#, EF Core, ASP.NET Core, auth, architecture) all target modern .NET and transfer directly to real jobs.
+
+---
+
+## Recommended Learning Path
+
+A clear order to follow — it matches the parts in this course:
+
+```text
+C# → OOP → LINQ → Async/Await → ASP.NET Core → EF Core → JWT Auth → Clean Architecture → Microservices
+```
+
+1. **C#** — language fundamentals (Part 1).
+2. **OOP** — classes, inheritance, interfaces, SOLID (Part 2).
+3. **LINQ** — querying collections cleanly (Part 3).
+4. **Async/Await** — non-blocking code (Part 4).
+5. **ASP.NET Core** — building web APIs (Part 5).
+6. **EF Core** — database access (Part 6).
+7. **JWT Auth** — securing your API (Part 8).
+8. **Clean Architecture** — structuring larger apps (Part 10).
+9. **Microservices** — distributed systems (Part 12).
+
+Fill in REST best practices, testing, and real-world features (Parts 7, 9, 11) as you go, and cement each stage with a project from the capstone list above.
+
+---
+
+## You've reached the end
+
+You now have a complete path from C# basics to deploying microservices in the cloud. Revisit any part as a reference, and keep building — every project makes the concepts more concrete.
+
+Back to the **[course index (README)](/feature/techstack/donNetCore/overview)**.

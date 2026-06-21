@@ -1,0 +1,38 @@
+---
+title: The CLI
+sidebarTitle: The CLI
+description: Install the mint CLI, run a local dev server, and check broken links.
+icon: terminal
+---
+
+Install once, then work locally with hot reload.
+
+<CodeGroup>
+
+```bash npm
+npm install -g mint
+```
+
+```bash one-off
+npx mint dev
+```
+
+</CodeGroup>
+
+| Command               | What it does                                                        |
+| --------------------- | ------------------------------------------------------------------- |
+| `mint dev`            | Local dev server with hot reload (defaults to `localhost:3000`).    |
+| `mint dev --port 3333`| Run on a different port.                                            |
+| `mint broken-links`   | Report broken internal links — wire this into CI.                  |
+| `mint openapi-check`  | Validate an OpenAPI spec before relying on it for the playground.   |
+| `mint update`         | Upgrade the CLI to the latest version.                              |
+
+<Warning>
+  If `mint dev` renders stale content or throws odd module errors, clear the local
+  cache: delete the `.mintlify` folder in the project and restart. This resolves
+  the large majority of "works in prod, broken locally" reports.
+</Warning>
+
+<Card title="Next: docs.json deep dive" icon="arrow-right" href="/feature/mintlify/docs-json">
+  The config file you'll edit most.
+</Card>

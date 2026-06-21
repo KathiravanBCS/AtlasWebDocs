@@ -1,0 +1,36 @@
+---
+title: Observability & Monitoring
+sidebarTitle: Observability
+description: Logging, distributed tracing, and health monitoring for backend services.
+icon: chart-line
+---
+
+## Logging — Pino Ecosystem
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **Pino** | Very low-overhead structured JSON logger for Node. | [getpino.io](https://getpino.io) |
+| **Pino HTTP** | HTTP request logging middleware built on Pino. | [github.com/pinojs/pino-http](https://github.com/pinojs/pino-http) |
+| **Pino Pretty** | Human-readable log formatting for local development. | [github.com/pinojs/pino-pretty](https://github.com/pinojs/pino-pretty) |
+| **NestJS Pino** | Pino integration for Nest with request-scoped logging. | [github.com/iamolegga/nestjs-pino](https://github.com/iamolegga/nestjs-pino) |
+
+## Distributed Tracing — OpenTelemetry
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **OpenTelemetry** | Vendor-neutral traces, metrics, and logs across services. | [opentelemetry.io/docs](https://opentelemetry.io/docs/) |
+
+## Health Monitoring — Health Checks
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **NestJS Terminus** | Readiness/liveness health checks for Nest (DB, disk, custom). | [docs.nestjs.com/recipes/terminus](https://docs.nestjs.com/recipes/terminus) |
+
+<Note>
+  Logging, tracing, and health-check practices are defined in the Playbook's
+  [Monitoring](/feature/playbook/monitoring) section.
+</Note>
+
+<Card title="Next: Security" icon="arrow-right" href="/feature/techstack/backend/security">
+  Helmet, CORS, and rate limiting.
+</Card>

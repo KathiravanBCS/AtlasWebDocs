@@ -1,0 +1,272 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "AtlasWebDocs",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/logo/awds tab logo without bg.svg",
+  "colors": {
+    "primary": "#4f46e5",
+    "light": "#818cf8",
+    "dark": "#4338ca"
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "background": {
+    "color": {
+      "light": "#ffffff",
+      "dark": "#0a0a0a"
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Frontend Tech Stack",
+        "href": "/feature/techstack/frontend/overview"
+      },
+      {
+        "label": "Backend Tech Stack",
+        "href": "/feature/techstack/backend/overview"
+      },
+      {
+        "label": "Mintlify Guide",
+        "href": "/feature/mintlify/overview"
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "website": "https://devdocs.academy",
+      "github": "https://github.com/devdocs-academy",
+      "x": "https://x.com/devdocs"
+    }
+  },
+  "navigation": {
+    "dropdowns": [
+      {
+        "dropdown": "Home",
+        "icon": "house",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["index"]
+          }
+        ]
+      },
+      {
+        "dropdown": "Frontend Tech Stack",
+        "icon": "layer-group",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["feature/techstack/frontend/overview"]
+          },
+          {
+            "group": "Foundation",
+            "pages": [
+              "feature/techstack/frontend/core-frameworks",
+              "feature/techstack/frontend/build-tools",
+              "feature/techstack/frontend/languages"
+            ]
+          },
+          {
+            "group": "UI & Styling",
+            "pages": [
+              "feature/techstack/frontend/ui-libraries",
+              "feature/techstack/frontend/styling",
+              "feature/techstack/frontend/icons",
+              "feature/techstack/frontend/animation",
+              "feature/techstack/frontend/notifications"
+            ]
+          },
+          {
+            "group": "Data & State",
+            "pages": [
+              "feature/techstack/frontend/state-management",
+              "feature/techstack/frontend/auth",
+              "feature/techstack/frontend/tables",
+              "feature/techstack/frontend/charts",
+              "feature/techstack/frontend/forms"
+            ]
+          },
+          {
+            "group": "Content & AI",
+            "pages": [
+              "feature/techstack/frontend/editors",
+              "feature/techstack/frontend/markdown",
+              "feature/techstack/frontend/ai-ui"
+            ]
+          },
+          {
+            "group": "Files & Utilities",
+            "pages": [
+              "feature/techstack/frontend/files",
+              "feature/techstack/frontend/date-time",
+              "feature/techstack/frontend/utilities",
+              "feature/techstack/frontend/microsoft"
+            ]
+          },
+          {
+            "group": "Quality & Tooling",
+            "pages": [
+              "feature/techstack/frontend/testing",
+              "feature/techstack/frontend/storybook",
+              "feature/techstack/frontend/code-quality"
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": "Backend Tech Stack",
+        "icon": "server",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["feature/techstack/backend/overview"]
+          },
+          {
+            "group": "Foundation",
+            "pages": [
+              "feature/techstack/backend/frameworks",
+              "feature/techstack/backend/runtime",
+              "feature/techstack/backend/database"
+            ]
+          },
+          {
+            "group": "API & Security",
+            "pages": [
+              "feature/techstack/backend/auth",
+              "feature/techstack/backend/microsoft",
+              "feature/techstack/backend/api",
+              "feature/techstack/backend/validation",
+              "feature/techstack/backend/security"
+            ]
+          },
+          {
+            "group": "AI & Data",
+            "pages": [
+              "feature/techstack/backend/ai",
+              "feature/techstack/backend/mcp",
+              "feature/techstack/backend/vector-rag"
+            ]
+          },
+          {
+            "group": "Services & Storage",
+            "pages": [
+              "feature/techstack/backend/messaging",
+              "feature/techstack/backend/caching",
+              "feature/techstack/backend/scheduling",
+              "feature/techstack/backend/storage",
+              "feature/techstack/backend/documents",
+              "feature/techstack/backend/sql"
+            ]
+          },
+          {
+            "group": "Operations",
+            "pages": [
+              "feature/techstack/backend/observability",
+              "feature/techstack/backend/compression-reactive",
+              "feature/techstack/backend/infrastructure"
+            ]
+          },
+          {
+            "group": "Quality & Tooling",
+            "pages": [
+              "feature/techstack/backend/testing",
+              "feature/techstack/backend/tooling",
+              "feature/techstack/backend/utilities"
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": ".NET Core",
+        "icon": "code",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["feature/techstack/donNetCore/overview"]
+          },
+          {
+            "group": "C# Language",
+            "pages": [
+              "feature/techstack/donNetCore/part-01-csharp-fundamentals",
+              "feature/techstack/donNetCore/part-02-oop",
+              "feature/techstack/donNetCore/part-03-collections-linq",
+              "feature/techstack/donNetCore/part-04-exceptions-async"
+            ]
+          },
+          {
+            "group": "ASP.NET Core",
+            "pages": [
+              "feature/techstack/donNetCore/part-05-aspnet-core-fundamentals",
+              "feature/techstack/donNetCore/part-06-database-ef-core",
+              "feature/techstack/donNetCore/part-07-rest-apis",
+              "feature/techstack/donNetCore/part-08-security"
+            ]
+          },
+          {
+            "group": "Quality & Architecture",
+            "pages": [
+              "feature/techstack/donNetCore/part-09-testing",
+              "feature/techstack/donNetCore/part-10-architecture",
+              "feature/techstack/donNetCore/part-11-real-world",
+              "feature/techstack/donNetCore/part-12-advanced-topics"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "feature/techstack/donNetCore/part-13-projects-and-comparison"
+            ]
+          }
+        ]
+      },
+      {
+        "dropdown": "Mintlify Guide",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "feature/mintlify/overview",
+              "feature/mintlify/what-is-mintlify",
+              "feature/mintlify/request-lifecycle"
+            ]
+          },
+          {
+            "group": "Build",
+            "pages": [
+              "feature/mintlify/project-structure",
+              "feature/mintlify/cli",
+              "feature/mintlify/docs-json",
+              "feature/mintlify/navigation",
+              "feature/mintlify/writing-content",
+              "feature/mintlify/components",
+              "feature/mintlify/api-playground"
+            ]
+          },
+          {
+            "group": "Operate",
+            "pages": [
+              "feature/mintlify/ai-native",
+              "feature/mintlify/seo-analytics",
+              "feature/mintlify/deployment",
+              "feature/mintlify/enterprise"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "feature/mintlify/best-practices",
+              "feature/mintlify/pitfalls"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

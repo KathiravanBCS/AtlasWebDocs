@@ -1,0 +1,282 @@
+---
+title: "Exception Handling and Async"
+sidebarTitle: "Part 4: Exceptions & Async"
+description: "Handling errors robustly and writing asynchronous code with async/await."
+icon: "bolt"
+---
+
+This part covers handling errors safely and writing non-blocking asynchronous code.
+
+---
+
+## Module 10: Exception Handling
+
+### try-catch-finally
+
+**Definition:** A `try-catch-finally` block runs risky code, catches errors, and runs cleanup code either way.
+
+**Explanation:**
+- **`try`:** wraps code that might fail.
+- **`catch`:** runs if an exception is thrown, letting you handle it.
+- **`finally`:** always runs, whether or not an error occurred (used for cleanup).
+
+**Basic example:**
+```csharp
+try
+{
+    int x = int.Parse("abc"); // throws
+}
+catch (FormatException ex)
+{
+    Console.WriteLine($"Bad input: {ex.Message}");
+}
+finally
+{
+    Console.WriteLine("Done");  // always runs
+}
+```
+
+**Real-world example:** Reading a file that may not exist — catch the error and show a friendly message instead of crashing.
+
+**Advanced notes:**
+- Catch specific exception types before general `Exception`.
+- A `using` statement is cleaner than `finally` for disposing resources.
+- Exception filters: `catch (Exception ex) when (ex.Message.Contains("timeout"))`.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/exceptions/
+- https://www.w3schools.com/cs/cs_exceptions.php
+
+---
+
+### Custom Exceptions
+
+**Definition:** A custom exception is your own exception type for a specific error in your application.
+
+**Explanation:**
+- Create a class that inherits from `Exception`.
+- Use it to represent domain-specific failures (e.g., `InsufficientFundsException`).
+- Throw it with `throw new ...`.
+
+**Basic example:**
+```csharp
+class NotFoundException : Exception
+{
+    public NotFoundException(string message) : base(message) { }
+}
+
+void GetUser(int id)
+{
+    if (id <= 0) throw new NotFoundException("User not found");
+}
+```
+
+**Real-world example:** Throwing a `ProductOutOfStockException` so the calling code can react specifically to that situation.
+
+**Advanced notes:**
+- Provide constructors that accept a message and an inner exception.
+- Custom exceptions make `catch` blocks and global handlers cleaner and more meaningful.
+- Avoid using exceptions for normal control flow — they are costly.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/standard/exceptions/how-to-create-user-defined-exceptions
+- https://learn.microsoft.com/en-us/dotnet/api/system.exception
+
+---
+
+### Best Practices
+
+**Definition:** Exception handling best practices are guidelines for using exceptions cleanly and safely.
+
+**Explanation:**
+- Catch only what you can handle; let unexpected errors bubble up.
+- Never swallow exceptions silently (empty `catch`).
+- Preserve the original error when rethrowing.
+
+**Basic example:**
+```csharp
+try { Process(); }
+catch (Exception ex)
+{
+    Logger.LogError(ex, "Process failed");
+    throw;          // rethrow, preserves stack trace
+    // NOT: throw ex;  (this resets the stack trace)
+}
+```
+
+**Real-world example:** An API logs the full error internally but returns a generic "Something went wrong" message to the user (no sensitive details leaked).
+
+**Advanced notes:**
+- Validate input early to avoid exceptions (e.g., `TryParse`, guard clauses).
+- Use specific exception types so handlers can be precise.
+- Don't catch `Exception` broadly except at top-level boundaries (like global middleware).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/standard/exceptions/best-practices-for-exceptions
+- https://learn.microsoft.com/en-us/dotnet/csharp/fundamentals/exceptions/exception-handling
+
+---
+
+## Module 11: Async Programming
+
+### Task
+
+**Definition:** A `Task` represents an operation that runs and completes in the future, possibly returning a value.
+
+**Explanation:**
+- `Task` = an operation with no result; `Task<T>` = an operation returning a `T`.
+- It lets work happen without blocking the current thread.
+- You usually `await` a task to get its result.
+
+**Basic example:**
+```csharp
+Task<int> GetNumberAsync()
+{
+    return Task.FromResult(42); // a completed task with a value
+}
+```
+
+**Real-world example:** A web request to an external API returns a `Task<string>` so the server can handle other requests while waiting.
+
+**Advanced notes:**
+- `Task.Run(() => ...)` offloads CPU-bound work to a thread pool thread.
+- A `Task` can be in states: created, running, completed, faulted, or canceled.
+- Don't confuse tasks (for I/O) with raw threads (for parallelism).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task
+- https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/task-asynchronous-programming-model
+
+---
+
+### async and await
+
+**Definition:** `async` marks a method as asynchronous; `await` pauses it until a task finishes, without blocking the thread.
+
+**Explanation:**
+- An `async` method can use `await` inside it.
+- `await` waits for a task but frees the thread to do other work meanwhile.
+- The method resumes automatically when the awaited task completes.
+
+**Basic example:**
+```csharp
+async Task<string> DownloadAsync()
+{
+    using var client = new HttpClient();
+    string data = await client.GetStringAsync("https://example.com");
+    return data;
+}
+```
+
+**Real-world example:** A web API saves to the database with `await db.SaveChangesAsync()`, so the server stays responsive under load.
+
+**Advanced notes:**
+- Return `Task`/`Task<T>` from async methods; use `async void` only for event handlers.
+- Avoid `.Result` or `.Wait()` on tasks — they can deadlock; always `await`.
+- Name async methods with an `Async` suffix by convention.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/
+- https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/await
+
+---
+
+### Task.WhenAll
+
+**Definition:** `Task.WhenAll` runs multiple tasks at the same time and waits for all of them to finish.
+
+**Explanation:**
+- Start several tasks without awaiting each one immediately.
+- `await Task.WhenAll(...)` completes when every task is done.
+- Much faster than awaiting them one by one (sequentially).
+
+**Basic example:**
+```csharp
+Task<int> t1 = GetCountAsync("users");
+Task<int> t2 = GetCountAsync("orders");
+
+int[] results = await Task.WhenAll(t1, t2); // run together
+Console.WriteLine(results[0] + results[1]);
+```
+
+**Real-world example:** A dashboard loads stats from three services in parallel, cutting total wait time roughly to the slowest single call.
+
+**Advanced notes:**
+- `Task.WhenAny` completes when the first task finishes (useful for timeouts/races).
+- If any task fails, `WhenAll` throws; inspect `Task.Exception` to see all failures.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.whenall
+- https://learn.microsoft.com/en-us/dotnet/standard/parallel-programming/
+
+---
+
+### CancellationToken
+
+**Definition:** A `CancellationToken` lets you signal and cooperatively stop a running async operation.
+
+**Explanation:**
+- A `CancellationTokenSource` creates the token and triggers cancellation.
+- Pass the token into async methods; they check it and stop politely.
+- Common for timeouts and user-initiated cancels.
+
+**Basic example:**
+```csharp
+async Task RunAsync(CancellationToken token)
+{
+    for (int i = 0; i < 100; i++)
+    {
+        token.ThrowIfCancellationRequested(); // stop if requested
+        await Task.Delay(100, token);
+    }
+}
+```
+
+**Real-world example:** In ASP.NET Core, the framework passes a token that cancels database work if the client disconnects mid-request.
+
+**Advanced notes:**
+- Cancellation is cooperative — the operation must check the token to actually stop.
+- `CancellationTokenSource(TimeSpan)` auto-cancels after a delay (timeout pattern).
+- Pass tokens all the way down your async call chain.
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.threading.cancellationtoken
+- https://learn.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads
+
+---
+
+### ConfigureAwait
+
+**Definition:** `ConfigureAwait(false)` tells `await` not to resume on the original context, which can improve performance.
+
+**Explanation:**
+- By default, after `await`, code resumes on the original synchronization context.
+- In library code, that context is usually unnecessary overhead.
+- `ConfigureAwait(false)` skips capturing it.
+
+**Basic example:**
+```csharp
+async Task<string> LoadAsync()
+{
+    var data = await GetDataAsync().ConfigureAwait(false);
+    return data;
+}
+```
+
+**Real-world example:** A reusable library method uses `ConfigureAwait(false)` to avoid deadlocks when called from apps with a UI thread.
+
+**Advanced notes:**
+- Use `ConfigureAwait(false)` in library code; in ASP.NET Core apps it usually does not matter (no UI sync context).
+- Do not use it where you must resume on a specific thread (e.g., updating UI controls).
+
+**Reference links:**
+- https://learn.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.configureawait
+- https://devblogs.microsoft.com/dotnet/configureawait-faq/
+
+---
+
+## What to build next
+
+Write an async console app that fetches text from 3 public URLs concurrently using `Task.WhenAll`, wraps each call in try-catch, and supports cancelling after 5 seconds with a `CancellationToken`.
+
+Next: **[Part 5 — ASP.NET Core Fundamentals](/feature/techstack/donNetCore/part-05-aspnet-core-fundamentals)**.

@@ -1,0 +1,32 @@
+---
+title: Common pitfalls (and the fix)
+sidebarTitle: Common pitfalls
+description: The symptoms that bite people in production, their likely causes, and the fix for each.
+icon: triangle-exclamation
+---
+
+| Symptom                                   | Likely cause                                  | Fix                                                       |
+| ----------------------------------------- | --------------------------------------------- | -------------------------------------------------------- |
+| Page renders but isn't in the sidebar     | Not listed in `navigation`                    | Add its path to a `group` in `docs.json`.                |
+| Local dev shows stale or broken content   | Cached build artifacts                        | Delete `.mintlify` and rerun `mint dev`.                 |
+| API reference looks incomplete            | Invalid or partial OpenAPI spec               | Run `mint openapi-check`; fix the spec, not the page.    |
+| Deploy didn't happen after merge          | Build failed on a broken page or config       | Check the build log; fix MDX/`docs.json`, push again.    |
+| Old links 404 after a restructure         | URLs changed without redirects                | Add entries to `redirects` in `docs.json`.               |
+| Search returns nothing for real terms     | Thin or poorly-headed content                 | Add real headings and self-contained sections.           |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Official Mintlify docs" icon="book" href="https://mintlify.com/docs">
+    The canonical reference — check it when a property's exact name matters.
+  </Card>
+  <Card title="docs.json schema" icon="brackets-curly" href="https://mintlify.com/docs.json">
+    The live schema that powers editor autocomplete.
+  </Card>
+  <Card title="Deployment guide" icon="rocket" href="https://mintlify.com/docs/deployment">
+    Connecting Git, custom domains, and CI.
+  </Card>
+  <Card title="This project's index" icon="house" href="/">
+    Back to the DevDocs Academy overview.
+  </Card>
+</CardGroup>

@@ -1,0 +1,45 @@
+---
+title: Authentication & Authorization
+sidebarTitle: Auth
+description: Identity, tokens, and access control — Azure MSAL, JWT, Passport, JWKS, and Azure AD.
+icon: lock
+---
+
+## Authentication — Microsoft Identity
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **Azure MSAL Node** | Microsoft Authentication Library for Node.js (OAuth2/OIDC). | [learn.microsoft.com/entra/msal/node](https://learn.microsoft.com/en-us/entra/identity-platform/msal-node-overview) |
+| **Azure Identity** | Azure SDK credential library for acquiring tokens. | [learn.microsoft.com/javascript/api/overview/azure/identity-readme](https://learn.microsoft.com/en-us/javascript/api/overview/azure/identity-readme) |
+
+## JWT Authentication
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **NestJS JWT** | JWT signing/verification module for Nest. | [docs.nestjs.com/security/authentication](https://docs.nestjs.com/security/authentication) |
+| **Passport JWT** | Passport strategy for authenticating JWT bearer tokens. | [github.com/mikenicholson/passport-jwt](https://github.com/mikenicholson/passport-jwt) |
+| **JWKS RSA** | Retrieves signing keys from a JWKS endpoint to verify tokens. | [github.com/auth0/node-jwks-rsa](https://github.com/auth0/node-jwks-rsa) |
+
+## Passport Ecosystem
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **Passport** | Extensible authentication middleware for Node.js. | [passportjs.org/docs](https://www.passportjs.org/docs/) |
+| **Passport JWT** | JWT bearer strategy (also used above). | [github.com/mikenicholson/passport-jwt](https://github.com/mikenicholson/passport-jwt) |
+
+## Authorization
+
+| Technology | Description | Study link |
+| ---------- | ----------- | ---------- |
+| **JWKS RSA (token validation)** | Validates token signatures against the IdP's public keys. | [github.com/auth0/node-jwks-rsa](https://github.com/auth0/node-jwks-rsa) |
+| **Azure Active Directory Integration** | Validates Azure AD tokens and maps roles/claims to permissions. | [learn.microsoft.com/entra/identity-platform](https://learn.microsoft.com/en-us/entra/identity-platform/) |
+
+<Warning>
+  Token and session rules are defined in the Playbook's
+  [Security Standards](/feature/playbook/security-standards) — short-lived tokens,
+  validate `exp`/`iss`/`aud`, default-deny authorization.
+</Warning>
+
+<Card title="Next: Microsoft Ecosystem" icon="arrow-right" href="/feature/techstack/backend/microsoft">
+  Microsoft Graph integration.
+</Card>
