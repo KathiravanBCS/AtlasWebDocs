@@ -5,7 +5,7 @@
   "description": "Documentation site for AtlasWebDocs — an all-in-one component library and documentation platform for React, Next.js, MUI, Mantine, and other modern frontend stacks.",
   "scripts": {
     "dev": "mint dev",
-    "build": "mint export",
+    "build": "mint export && unzip -o export.zip -d public",
     "check": "mint broken-links",
     "upgrade": "mint update"
   },

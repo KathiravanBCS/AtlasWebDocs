@@ -1,4 +1,3 @@
 {
-  "buildCommand": "mint export",
-  "outputDirectory": ".mintlify/export"
+  "outputDirectory": "public"
 }
